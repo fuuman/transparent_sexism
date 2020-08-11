@@ -184,7 +184,7 @@ def main():
 
     if args.local_rank == -1 or args.no_cuda:
         if torch.cuda.is_available() and not args.no_cuda:
-           device = torch.device("cuda:3")
+           device = torch.device("cuda:0")
         elif args.no_cuda or torch.cuda.is_available():
             device = torch.device("cpu")
         n_gpu = torch.cuda.device_count()
