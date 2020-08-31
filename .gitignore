@@ -6,6 +6,10 @@ __pycache__/
 venv/
 venv_win_py36/
 venv_linux_36/
+shap/
+svm_stuff/
+/data/**/*.pkl
+/data/**/*.tsv
 
 data/deception/bert_fine_tune/*
 data/yelp/bert_fine_tune/*

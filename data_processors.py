@@ -183,6 +183,8 @@ class Sst2Processor(DataProcessor):
         for (i, line) in enumerate(lines):
             if i == 0:
                 continue
+            if len(line) != 2:
+                continue
             guid = "%s-%s" % (set_type, i)
             text_a = line[0]
             label = line[1]
