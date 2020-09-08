@@ -4,7 +4,8 @@ from sklearn.preprocessing import LabelEncoder
 
 
 class UnsexData:
-    DATA_DIR = os.path.abspath('icwsm2020_data')
+    DATA_DIR = os.path.join('/run', 'media', 'marco', 'Daten', 'GitHub',
+                            'feature-importance', 'my_work', 'icwsm2020_data')
     ALL_DATA_FILE_PATH = os.path.join(DATA_DIR, 'all_data.csv')
     ALL_DATA_ANNOTATIONS_FILE_PATH = os.path.join(DATA_DIR, 'all_data_annotations.csv')
 
