@@ -28,7 +28,7 @@ def train(model, save_as=None, grid=False):
         param_grid = {'classifier__C': [0.1, 1, 10, 100, 1000],
                       'classifier__max_iter': [1000, 5000, 10000],
                       'tfidf__max_features': [None, 5000]}
-        svm_model = GridSearchCV(pipeline, param_grid, scoring='accuracy', refit=True)
+        pipeline = GridSearchCV(pipeline, param_grid, scoring='accuracy', refit=True)
     else:
         pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(max_features=5000)), ('classifier', model)])
 
