@@ -2,8 +2,10 @@ import os
 import json
 import gzip
 import spacy
+from sklearn.model_selection import train_test_split
 import pickle
 import random
+from my_work.unsex_data import UnsexData
 import numpy as np
 
 def get_abs_path(save_dir, file_name):
@@ -136,6 +138,7 @@ def load_data(dataset_name):
     DATA_DECEPTION_DIR = os.path.join(DATA_ROOT, 'deception')
     DATA_YELP_DIR = os.path.join(DATA_ROOT, 'yelp')
     DATA_SST_DIR = os.path.join(DATA_ROOT, 'sst')
+    DATA_UNSEX_DIR = os.path.join(DATA_ROOT, 'unsex')
     train_tokens, dev_tokens, train_dev_tokens, test_tokens = [], [], [], []
     train_labels, dev_labels, train_dev_labels, test_labels = [], [], [], []
     if dataset_name == 'deception':
@@ -150,6 +153,11 @@ def load_data(dataset_name):
     elif dataset_name == 'uci':
         train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
         train_labels, dev_labels, train_dev_labels, test_labels = get_uci_tokens_labels(DATA_UCI_DIR)
+    elif dataset_name == 'unsex':
+        ud = UnsexData()
+        X, y = ud.get_preprocessed_data()
+        train_tokens, test_tokens, train_labels, test_labels = train_test_split(X, y, test_size=0.20)
+        return train_tokens, test_tokens, train_labels, test_labels
     return train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
             train_labels, dev_labels, train_dev_labels, test_labels
 
