@@ -14,8 +14,14 @@ class UnsexData:
         # self.all_data_annotations = pd.read_csv(self.ALL_DATA_ANNOTATIONS_FILE_PATH, sep='\t')
 
     def get_preprocessed_data(self):
-        X = pd.DataFrame(self.all_data['text'].dropna())
-        y = pd.DataFrame(self.all_data['sexist'].dropna())
+        # load data in dataframe
+        df = pd.DataFrame(self.all_data)
+
+        # filter adv examples
+        df = df[df['of_id'].isnull()]
+
+        X = df['text'].dropna().values.tolist()
+        y = pd.DataFrame(df['sexist'].dropna())
         y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
         y = y.to_numpy().ravel()
         return X, y
