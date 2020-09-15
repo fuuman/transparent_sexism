@@ -30,7 +30,7 @@ def train(model, save_as=None, grid=False):
                       'tfidf__max_features': [None, 5000]}
         pipeline = GridSearchCV(pipeline, param_grid, scoring='accuracy', refit=True)
     else:
-        pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(max_features=5000)), ('classifier', model)])
+        pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()), ('classifier', model)])
 
     pipeline.fit(X_train, y_train)
     y_pred = pipeline.predict(X_test)
