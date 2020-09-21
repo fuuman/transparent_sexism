@@ -7,6 +7,7 @@ venv/
 venv_win_py36/
 venv_linux_36/
 shap/
+shap.bak/
 svm_stuff/
 /data/**/*.pkl
 /data/**/*.tsv
