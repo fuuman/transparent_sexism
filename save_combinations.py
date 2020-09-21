@@ -103,6 +103,28 @@ def get_unsex_xgb_impt_d(pipeline):
     return d
 
 
+
+def save_unsex_lr_impt(model_name):
+    model = 'my_work/models/{}.pkl'.format(model_name)
+    path = utils.get_abs_path(REPO_DIR, model)
+    print('model path: {}'.format(path))
+    pipeline = utils.load_pickle(path)
+    lr_impt_d = get_unsex_lr_impt_d(pipeline)
+    features = 'features/{}_impt_all_features.pkl'.format(model_name)
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+    utils.save_pickle(lr_impt_d, path)
+
+
+def get_unsex_lr_impt_d(pipeline):
+    importance = pipeline.named_steps['classifier'].coef_[0]
+    vocab = pipeline.named_steps['tfidf'].vocabulary_
+    d = {}
+    for word, index in vocab.items():
+        score = float(importance[index])
+        d[str(word)] = score
+    return d
+
+
 def save_unsex_xgb_impt(model_name):
     model = 'my_work/models/{}.pkl'.format(model_name)
     path = utils.get_abs_path(REPO_DIR, model)
@@ -301,6 +323,58 @@ def save_shap_val(file, name, SAVE_DIR, train_data, test_data):
     scores = 'feature_importance/{}_shap_all_scores.pkl'.format(name)
     path = utils.get_abs_path(SAVE_DIR, scores)
     utils.save_pickle(importance_l, path)
+
+
+def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
+    feature = pipeline.named_steps['tfidf']
+    clf = pipeline.named_steps['classifier']
+    vocab = feature.vocabulary_
+    index_feature_d = {}
+    for word, index in vocab.items():
+        index_feature_d[index] = word
+    X_train = feature.transform(train_tokens)
+    X_test = feature.transform(test_tokens).toarray()
+    explainer = None
+    if 'svm' in clf_name:
+        explainer = shap.LinearExplainer(clf, X_train, feature_dependence="independent")
+    elif 'lr' in clf_name:
+        explainer = shap.LinearExplainer(clf, X_train, feature_dependence="independent")
+    else:
+        explainer = shap.TreeExplainer(clf, feature_dependence='independent', data=X_train.toarray())
+    shap_values = explainer.shap_values(X_test)
+    # get all features
+    features_l, importance_l = [], []
+    for idx, row in enumerate(shap_values):
+        word_shap_val_d = {}
+        for idx_b, shap_val in enumerate(row):
+            feature = index_feature_d[idx_b]
+            word_shap_val_d[feature] = abs(shap_val) # taking absolute value
+        features_tmp = list(word_shap_val_d.keys())
+        features = " ".join(features_tmp)
+        features_l.append(features)
+        scores = list(word_shap_val_d.values())
+        importance_l.append(scores)
+    return features_l, importance_l
+
+
+def save_unsex_shap_val(name, train_tokens, test_tokens):
+    model = 'my_work/models/{}.pkl'.format(name)
+    path = utils.get_abs_path(REPO_DIR, model)
+    print('model path: {}'.format(path))
+    model = None
+    if 'svm' in name:
+        model = utils.load_pickle(path, encoding=False)
+    else:
+        model = utils.load_pickle(path)
+    features_l, importance_l = [], []
+    features_l, importance_l = get_unsex_shap(name, model, train_tokens, test_tokens)
+    features = 'features/{}_shap_all_features.pkl'.format(name)
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+    utils.save_pickle(features_l, path)
+    scores = 'feature_importance/{}_shap_all_scores.pkl'.format(name)
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, scores)
+    utils.save_pickle(importance_l, path)
+
     
 def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
     # save_svm_coef('svm', 'svm', SAVE_DIR)
@@ -319,16 +393,26 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
     # save_shap_val('xgb', 'xgb', SAVE_DIR, train_dev_tokens, test_tokens)
 
 
-def save_unsex_data(test_tokens):
-    # unsex me stuff
+def save_unsex_data(train_tokens, test_tokens):
+    ### unsex me stuff
+    # built-in
     # save_unsex_svm_coef('svm_l1')
     # save_unsex_svm_coef('svm')
-    # save_unsex_xgb_impt('xgboost')
+    # save_unsex_lr_impt('lr')
+    # save_unsex_xgb_impt('xgb')
+
+    # lime
     # save_unsex_lime_coef('svm', test_tokens)
     # save_unsex_lime_coef('svm_l1', test_tokens)
     # save_unsex_lime_coef('lr', test_tokens)
-    save_unsex_lime_coef('xgboost', test_tokens)
-    # save_shap_val('svm', 'svm', SAVE_DIR, train_dev_tokens, test_tokens)
+    # save_unsex_lime_coef('xgb', test_tokens)
+
+    # shap
+    # save_unsex_shap_val('svm', train_tokens, test_tokens)
+    # save_unsex_shap_val('svm_l1', train_tokens, test_tokens)
+    # save_unsex_shap_val('lr', train_tokens, test_tokens)
+    save_unsex_shap_val('xgb', train_tokens, test_tokens)
+
 
 if __name__ == "__main__":
     # 1x save_data pro dataset bzw. classification task (deception, yelp, sst)
@@ -340,8 +424,8 @@ if __name__ == "__main__":
 
     ### yelp binary dataset
     # print('=== yelp binary ===')
-    train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
-    train_labels, dev_labels, train_dev_labels, test_labels = utils.load_data('yelp')
+    # train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
+    # train_labels, dev_labels, train_dev_labels, test_labels = utils.load_data('yelp')
     # save_data(SAVE_YELP_DIR, train_dev_tokens, test_tokens)
     
     ### sst binary dataset
@@ -353,4 +437,4 @@ if __name__ == "__main__":
     # my stuff
     print('=== unsex binary ===')
     train_tokens, test_tokens, train_labels, test_labels = utils.load_data('unsex')
-    save_unsex_data(test_tokens)
+    save_unsex_data(train_tokens, test_tokens)
