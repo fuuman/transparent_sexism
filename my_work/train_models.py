@@ -47,13 +47,13 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
         else:
             pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()), ('classifier', model)])
 
+        pipeline.fit(X_train, y_train)
+        y_pred = pipeline.predict(X_test)
+
         # save svm model trained on unsex data
         if save_as:
             pickle.dump(pipeline, open(os.path.join('models', f'{save_as}.pkl'), 'wb'))
             print(f'Model saved as {save_as}')
-
-        pipeline.fit(X_train, y_train)
-        y_pred = pipeline.predict(X_test)
 
     if report:
         print(confusion_matrix(y_test, y_pred))
