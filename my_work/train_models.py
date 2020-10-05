@@ -45,7 +45,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
                           'tfidf__max_features': [None, 5000]}
             pipeline = GridSearchCV(pipeline, param_grid, scoring='accuracy', refit=True)
         else:
-            pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()), ('classifier', model)])
+            pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(stop_words='english')), ('classifier', model)])
 
         pipeline.fit(X_train, y_train)
         y_pred = pipeline.predict(X_test)
@@ -59,8 +59,8 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
         print(confusion_matrix(y_test, y_pred))
         print(classification_report(y_test, y_pred, target_names=['non-sexist', 'sexist']))
         df = pd.DataFrame(classification_report(y_test, y_pred,
-                                                  target_names=['non-sexist', 'sexist'],
-                                                  output_dict=True)).transpose()
+                                                target_names=['non-sexist', 'sexist'],
+                                                output_dict=True)).transpose()
         df.to_csv(os.path.join('models', 'reports', f'{report}.csv'))
 
 
