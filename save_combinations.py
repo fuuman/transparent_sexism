@@ -4,6 +4,7 @@ import shap # use downloaded package instead of local package
 import spacy
 import utils
 # import torch
+# from fastbert import FastBERT
 import pandas as pd
 import pickle
 # import lstm as lc
@@ -336,11 +337,11 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     X_test = feature.transform(test_tokens).toarray()
     explainer = None
     if 'svm' in clf_name:
-        explainer = shap.LinearExplainer(clf, X_train, feature_dependence="independent")
+        explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
     elif 'lr' in clf_name:
-        explainer = shap.LinearExplainer(clf, X_train, feature_dependence="independent")
+        explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
     else:
-        explainer = shap.TreeExplainer(clf, feature_dependence='independent', data=X_train.toarray())
+        explainer = shap.TreeExplainer(clf, feature_dependence='independent', data=X_test)
     shap_values = explainer.shap_values(X_test)
     # get all features
     features_l, importance_l = [], []
@@ -358,7 +359,14 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
 
 
 def save_unsex_shap_val(name, train_tokens, test_tokens):
-    model = 'my_work/models/{}.pkl'.format(name)
+    if 'fastbert' in name:
+        model = FastBERT(
+            kernel_name="google_bert_base_en",
+            labels=[0, 1], device='cuda:0'
+        )
+        model.load_model('my_work/models/{}.bin'.format(name))
+    else:
+        model = 'my_work/models/{}.pkl'.format(name)
     path = utils.get_abs_path(REPO_DIR, model)
     print('model path: {}'.format(path))
     model = None
@@ -375,20 +383,25 @@ def save_unsex_shap_val(name, train_tokens, test_tokens):
     path = utils.get_abs_path(SAVE_UNSEX_DIR, scores)
     utils.save_pickle(importance_l, path)
 
-    
+
+def save_tokens(test_tokens):
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, 'tweets/tweets.pkl')
+    utils.save_pickle(test_tokens, path)
+
+
 def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
     # save_svm_coef('svm', 'svm', SAVE_DIR)
     # save_svm_coef('svm_l1', 'svm_l1', SAVE_DIR)
 
     # save_xgb_impt('xgb', 'xgb', SAVE_DIR)
 
-    save_lime_coef('svm', 'svm', SAVE_DIR, train_dev_tokens, test_tokens)
+    # save_lime_coef('svm', 'svm', SAVE_DIR, train_dev_tokens, test_tokens)
     # save_lime_coef('svm_l1', 'svm_l1', SAVE_DIR, train_dev_tokens, test_tokens)
     # save_lime_coef('xgb', 'xgb', SAVE_DIR, train_dev_tokens, test_tokens)
     # save_lime_coef('lstm_att', 'lstm_att', SAVE_DIR, \
     #                train_dev_tokens, test_tokens, d_file='lstm_att_hp')
 
-    # save_shap_val('svm', 'svm', SAVE_DIR, train_dev_tokens, test_tokens)
+    save_shap_val('svm', 'svm', SAVE_DIR, train_dev_tokens, test_tokens)
     # save_shap_val('svm_l1', 'svm_l1', SAVE_DIR, train_dev_tokens, test_tokens)
     # save_shap_val('xgb', 'xgb', SAVE_DIR, train_dev_tokens, test_tokens)
 
@@ -396,22 +409,22 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    # save_unsex_svm_coef('svm_l1')
-    # save_unsex_svm_coef('svm')
-    # save_unsex_lr_impt('lr')
-    # save_unsex_xgb_impt('xgb')
+    save_unsex_svm_coef('svm_l1')
+    save_unsex_svm_coef('svm')
+    save_unsex_lr_impt('lr')
+    save_unsex_xgb_impt('xgboost')
 
     # lime
-    # save_unsex_lime_coef('svm', test_tokens)
-    # save_unsex_lime_coef('svm_l1', test_tokens)
-    # save_unsex_lime_coef('lr', test_tokens)
-    # save_unsex_lime_coef('xgb', test_tokens)
+    save_unsex_lime_coef('svm', test_tokens)
+    save_unsex_lime_coef('svm_l1', test_tokens)
+    save_unsex_lime_coef('lr', test_tokens)
+    save_unsex_lime_coef('xgboost', test_tokens)
 
     # shap
-    # save_unsex_shap_val('svm', train_tokens, test_tokens)
-    # save_unsex_shap_val('svm_l1', train_tokens, test_tokens)
-    # save_unsex_shap_val('lr', train_tokens, test_tokens)
-    save_unsex_shap_val('xgb', train_tokens, test_tokens)
+    save_unsex_shap_val('svm', train_tokens, test_tokens)
+    save_unsex_shap_val('svm_l1', train_tokens, test_tokens)
+    save_unsex_shap_val('lr', train_tokens, test_tokens)
+    save_unsex_shap_val('xgboost', train_tokens, test_tokens)
 
 
 if __name__ == "__main__":
@@ -438,3 +451,4 @@ if __name__ == "__main__":
     print('=== unsex binary ===')
     train_tokens, test_tokens, train_labels, test_labels = utils.load_data('unsex')
     save_unsex_data(train_tokens, test_tokens)
+    save_tokens(test_tokens)
