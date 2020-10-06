@@ -7,8 +7,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from xgboost.sklearn import XGBClassifier
 import spacy
+import logging
+import numpy as np
 import pandas as pd
-from fastbert import FastBERT
+# from fastbert import FastBERT
+from fast_bert.data_cls import BertDataBunch
+import torch
+from fast_bert.learner_cls import BertLearner
+from fast_bert.metrics import accuracy
 import os
 from sklearn.model_selection import GridSearchCV
 import pickle
@@ -27,14 +33,20 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
     Returns:
         classification report as pandas DataFrame (optional)
     """
-    if 'fastbert' in str(type(model)):
-        if save_as:
-            model.fit(X_train, y_train, model_saving_path=os.path.join('models', f'{save_as}.bin'))
-        else:
-            model.fit(X_train, y_train)
-        y_pred = []
-        for tweet in X_test:
-            y_pred.append(model(tweet, speed=0.7)[0])
+    if 'bert' in str(type(model)).lower():
+        # fastbert
+        # if save_as:
+        #     model.fit(X_train, y_train, model_saving_path=os.path.join('models', f'{save_as}.bin'))
+        # else:
+        #     model.fit(X_train, y_train)
+        # y_pred = []
+        # for tweet in X_test:
+        #     y_pred.append(model(tweet, speed=0.7)[0])
+
+        # fast-bert
+        # no training needed; already trained in google colab due to RAM issues
+        predictions = model.predict_batch(X_test)
+        y_pred = np.array([int(p[0][0]) for p in predictions])
     else:
         if grid:
             pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()),
@@ -61,7 +73,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
         df = pd.DataFrame(classification_report(y_test, y_pred,
                                                 target_names=['non-sexist', 'sexist'],
                                                 output_dict=True)).transpose()
-        df.to_csv(os.path.join('models', 'reports', f'{report}.csv'))
+        df.to_csv(os.path.join('models', '_reports', f'{report}.csv'))
 
 
 if __name__ == '__main__':
@@ -88,10 +100,32 @@ if __name__ == '__main__':
     train(xgboost, X_train, X_test, y_train, y_test, save_as='xgboost', report='xgboost')
 
     print('###### FastBERT ######')
-    fastbert = FastBERT(
-        kernel_name="google_bert_base_en",
-        labels=[0, 1], device='cuda:0'
-    )
-    train(fastbert, X_train, X_test, y_train, y_test, save_as='fastbert', report='fastbert')
+    # pypi package 'fastbert'
+    # fastbert = FastBERT(
+    #     kernel_name="google_bert_base_en",
+    #     labels=[0, 1], device='cuda:0'
+    # )
+
+    # pypi package 'fast-bert'
+    ud.save_as_csv(X_train, X_test, y_train, y_test)
+    databunch = BertDataBunch('csv', 'csv',
+                              tokenizer='bert-base-uncased',
+                              train_file='train.csv',
+                              val_file='val.csv',
+                              label_file='labels.csv',
+                              text_col='text',
+                              label_col='label',
+                              batch_size_per_gpu=4,
+                              max_seq_length=512,
+                              multi_gpu=True,
+                              multi_label=False,
+                              model_type='bert')
+
+    fastbert = BertLearner.from_pretrained_model(databunch,
+                                                 pretrained_path=os.path.join('models', 'fast-bert'),
+                                                 metrics=[{'name': 'accuracy', 'function': accuracy}],
+                                                 device=torch.device("cuda"),
+                                                 logger=logging.getLogger(), output_dir='output')
+    train(fastbert, X_train, X_test, y_train, y_test, report='fast-bert')
 
     print('Training finished.')
