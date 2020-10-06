@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 
 class UnsexData:
@@ -28,3 +29,13 @@ class UnsexData:
         y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
         y = y.to_numpy().ravel()
         return X, y
+
+    @staticmethod
+    def save_as_csv(X_train, X_test, y_train, y_test):
+        # save training data as train.csv and test data as val.csv to train fast-bert
+        # see: https://github.com/kaushaltrivedi/fast-bert
+        train_df = pd.DataFrame(zip(X_train, y_train), columns=['text', 'label'])
+        train_df.to_csv(os.path.join('csv', 'train.csv'))
+
+        test_df = pd.DataFrame(zip(X_test, y_test), columns=['text', 'label'])
+        train_df.to_csv(os.path.join('csv', 'val.csv'))
