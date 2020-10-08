@@ -326,16 +326,15 @@ def save_shap_val(file, name, SAVE_DIR, train_data, test_data):
     utils.save_pickle(importance_l, path)
 
 
-def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
+def get_unsex_shap(clf_name, pipeline, test_tokens):
     feature = pipeline.named_steps['tfidf']
     clf = pipeline.named_steps['classifier']
     vocab = feature.vocabulary_
     index_feature_d = {}
     for word, index in vocab.items():
         index_feature_d[index] = word
-    X_train = feature.transform(train_tokens)
+    # X_train = feature.transform(train_tokens)
     X_test = feature.transform(test_tokens).toarray()
-    explainer = None
     if 'svm' in clf_name:
         explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
     elif 'lr' in clf_name:
@@ -358,7 +357,7 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     return features_l, importance_l
 
 
-def save_unsex_shap_val(name, train_tokens, test_tokens):
+def save_unsex_shap_val(name, test_tokens):
     if 'fastbert' in name:
         model = FastBERT(
             kernel_name="google_bert_base_en",
@@ -367,15 +366,14 @@ def save_unsex_shap_val(name, train_tokens, test_tokens):
         model.load_model('my_work/models/{}.bin'.format(name))
     else:
         model = 'my_work/models/{}.pkl'.format(name)
-    path = utils.get_abs_path(REPO_DIR, model)
-    print('model path: {}'.format(path))
-    model = None
-    if 'svm' in name:
-        model = utils.load_pickle(path, encoding=False)
-    else:
-        model = utils.load_pickle(path)
+        path = utils.get_abs_path(REPO_DIR, model)
+        print('model path: {}'.format(path))
+        if 'svm' in name:
+            model = utils.load_pickle(path, encoding=False)
+        else:
+            model = utils.load_pickle(path)
     features_l, importance_l = [], []
-    features_l, importance_l = get_unsex_shap(name, model, train_tokens, test_tokens)
+    features_l, importance_l = get_unsex_shap(name, model, test_tokens)
     features = 'features/{}_shap_all_features.pkl'.format(name)
     path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
     utils.save_pickle(features_l, path)
@@ -419,12 +417,14 @@ def save_unsex_data(train_tokens, test_tokens):
     save_unsex_lime_coef('svm_l1', test_tokens)
     save_unsex_lime_coef('lr', test_tokens)
     save_unsex_lime_coef('xgboost', test_tokens)
+    save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
-    save_unsex_shap_val('svm', train_tokens, test_tokens)
-    save_unsex_shap_val('svm_l1', train_tokens, test_tokens)
-    save_unsex_shap_val('lr', train_tokens, test_tokens)
-    save_unsex_shap_val('xgboost', train_tokens, test_tokens)
+    save_unsex_shap_val('svm', test_tokens)
+    save_unsex_shap_val('svm_l1', test_tokens)
+    save_unsex_shap_val('lr', test_tokens)
+    save_unsex_shap_val('xgboost', test_tokens)
+    save_unsex_shap_val('fast-bert', test_tokens)
 
 
 if __name__ == "__main__":
