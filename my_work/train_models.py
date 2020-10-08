@@ -7,27 +7,21 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from xgboost.sklearn import XGBClassifier
 import spacy
-import logging
+from my_work.utils import get_fastbert_model
 import numpy as np
 import pandas as pd
 # from fastbert import FastBERT
-from fast_bert.data_cls import BertDataBunch
-import torch
-from fast_bert.learner_cls import BertLearner
-from fast_bert.metrics import accuracy
 import os
-from sklearn.model_selection import GridSearchCV
 import pickle
 
 nlp = spacy.load("en_core_web_sm")
 
 
-def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, report=None):
+def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
     """
     Args:
         model (Model object): model to train
         save_as (String): if set model will be saved with this string as filename after training
-        grid:
         report (String): if set this method saves the classification report a csv file with that name
 
     Returns:
@@ -48,16 +42,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, grid=False, rep
         predictions = model.predict_batch(X_test)
         y_pred = np.array([int(p[0][0]) for p in predictions])
     else:
-        if grid:
-            pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()),
-                                       ('classifier', model)])
-
-            param_grid = {'classifier__C': [0.1, 1, 10, 100, 1000],
-                          'classifier__max_iter': [1000, 5000, 10000],
-                          'tfidf__max_features': [None, 5000]}
-            pipeline = GridSearchCV(pipeline, param_grid, scoring='accuracy', refit=True)
-        else:
-            pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(stop_words='english')), ('classifier', model)])
+        pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(stop_words='english')), ('classifier', model)])
 
         pipeline.fit(X_train, y_train)
         y_pred = pipeline.predict(X_test)
@@ -108,24 +93,7 @@ if __name__ == '__main__':
 
     # pypi package 'fast-bert'
     ud.save_as_csv(X_train, X_test, y_train, y_test)
-    databunch = BertDataBunch('csv', 'csv',
-                              tokenizer='bert-base-uncased',
-                              train_file='train.csv',
-                              val_file='val.csv',
-                              label_file='labels.csv',
-                              text_col='text',
-                              label_col='label',
-                              batch_size_per_gpu=4,
-                              max_seq_length=512,
-                              multi_gpu=True,
-                              multi_label=False,
-                              model_type='bert')
-
-    fastbert = BertLearner.from_pretrained_model(databunch,
-                                                 pretrained_path=os.path.join('models', 'fast-bert'),
-                                                 metrics=[{'name': 'accuracy', 'function': accuracy}],
-                                                 device=torch.device("cuda"),
-                                                 logger=logging.getLogger(), output_dir='output')
+    fastbert = get_fastbert_model()
     train(fastbert, X_train, X_test, y_train, y_test, report='fast-bert')
 
     print('Training finished.')
