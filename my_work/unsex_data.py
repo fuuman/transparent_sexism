@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
+from my_work.preprocessing.jha2017_preprocessing import preprocess_jha2017
 
 
 class UnsexData:
@@ -25,6 +25,10 @@ class UnsexData:
         df = df[df['of_id'].isnull()]
 
         X = df['text'].dropna().values.tolist()
+
+        # preprocessing by jha et al. 2017
+        X = list(preprocess_jha2017(X))
+
         y = pd.DataFrame(df['sexist'].dropna())
         y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
         y = y.to_numpy().ravel()
