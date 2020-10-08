@@ -15,3 +15,5 @@ svm_stuff/
 data/deception/bert_fine_tune/*
 data/yelp/bert_fine_tune/*
 data/sst/bert_fine_tune/*
+
+my_work/models/*
