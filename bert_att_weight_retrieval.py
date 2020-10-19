@@ -39,7 +39,7 @@ from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
 
 # spliting to make code cleaner -_-!
-from data_processors import ColaProcessor,MnliProcessor,MnliMismatchedProcessor,MrpcProcessor,Sst2Processor,StsbProcessor,QqpProcessor,QnliProcessor,RteProcessor,WnliProcessor
+from data_processors import ColaProcessor,MnliProcessor,MnliMismatchedProcessor,MrpcProcessor,Sst2Processor,StsbProcessor,QqpProcessor,QnliProcessor,RteProcessor,WnliProcessor,UnsexProcessor
 from train_utils import compute_metrics, convert_examples_to_features, id2onehot
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -168,6 +168,7 @@ def main():
         "qnli": QnliProcessor,
         "rte": RteProcessor,
         "wnli": WnliProcessor,
+        'unsex': UnsexProcessor
     }
 
     output_modes = {
@@ -180,6 +181,7 @@ def main():
         "qnli": "classification",
         "rte": "classification",
         "wnli": "classification",
+        'unsex': 'classification'
     }
 
     if args.local_rank == -1 or args.no_cuda:
@@ -349,7 +351,10 @@ def main():
         print("-"*80)
         print("len(first_prob): ", len(first_prob))
         print("len(first_prob[0]): ", len(first_prob[0]))
-        print("len(first_prob[0][0]): ", len(first_prob[0][0]))
+        try:
+            print("len(first_prob[0][0]): ", len(first_prob[0][0]))
+        except:
+            pass
 
         print("-"*80)
         print(save_folder_name)

@@ -1,24 +1,19 @@
 import os
 import pickle
 import utils
-from my_work.unsex_data import UnsexData
+from _utils.pathfinder import get_repo_path
+from _data.unsex_data import UnsexData
 
 
 def _load_tweets():
-    if os.name == 'posix':
-        path = '/run/media/marco/Daten/GitHub/feature-importance/data/unsex'
-    else:
-        path = 'D:\\GitHub\\feature-importance\\data\\unsex'
+    path = os.path.join(get_repo_path(), '_explanations', 'unsex')
     with open(os.path.join(path, 'tweets', 'tweets.pkl'), 'rb') as f:
         tweets = pickle.load(f)
     return tweets
 
 
 def _load_features_and_scores(model, ex_method):
-    if os.name == 'posix':
-        path = '/run/media/marco/Daten/GitHub/feature-importance/data/unsex'
-    else:
-        path = 'D:\\GitHub\\feature-importance\\data\\unsex'
+    path = os.path.join(get_repo_path(), '_explanations', 'unsex')
     if ex_method in ['impt', 'coef']:
         with open(os.path.join(path, 'features', f'{model}_{ex_method}_all_features.pkl'), 'rb') as f:
             c = pickle.load(f)
@@ -50,7 +45,7 @@ def print_explanation(tweet_id, model_name, ex_methods=None, k=4):
 
 def print_prediction_and_label(tweet_id, model_name):
     classes = ['non-sexist', 'sexist']
-    path = utils.get_abs_path('models', f'{model_name}.pkl')
+    path = os.path.join(get_repo_path(), '_trained_models', f'{model_name}.pkl')
     if 'svm' in model_name:
         pipeline = utils.load_pickle(path, encoding=False)
     else:
@@ -66,10 +61,14 @@ def print_prediction_and_label(tweet_id, model_name):
 
 
 if __name__ == '__main__':
+    # current options: svm, svm_l1, lr, xgboost
     model_name = 'xgboost'
 
+    # current options: lime, shap
+    explanation_method = 'lime'
+
     # filter "unimportant tweets" without non-zero LIME explanations
-    s = _load_features_and_scores(model_name, 'lime')[1]
+    s = _load_features_and_scores(model_name, explanation_method)[1]
     tweet_ids = [tweet_id for tweet_id, scores in enumerate(s) if sum(scores) != 0]
     tweets = _load_tweets()
 

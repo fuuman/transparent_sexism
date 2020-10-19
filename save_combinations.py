@@ -6,20 +6,23 @@ import utils
 # import torch
 # from fastbert import FastBERT
 import pandas as pd
+from _utils.fastbert import get_fastbert_model
 import pickle
 # import lstm as lc
+from sklearn.feature_extraction.text import TfidfVectorizer
 import collections
 import numpy as np
 from functools import partial
 from collections import OrderedDict
 from sklearn.metrics import accuracy_score
+from _utils.pathfinder import get_repo_path
 from lime.lime_text import LimeTextExplainer
 import warnings
 warnings.filterwarnings('ignore')
 
 ### save_dir
-REPO_DIR = os.path.dirname(os.path.abspath('data'))
-DATA_ROOT = os.path.join(REPO_DIR, 'data')
+REPO_DIR = get_repo_path()
+DATA_ROOT = os.path.join(REPO_DIR, '_explanations')
 
 SAVE_DECEPTION_DIR = os.path.join(DATA_ROOT, 'deception')
 SAVE_YELP_DIR = os.path.join(DATA_ROOT, 'yelp')
@@ -65,7 +68,7 @@ def save_svm_coef(file, name, SAVE_DIR):
     utils.save_pickle(svm_coef_d, path)
 
 def save_unsex_svm_coef(model_name):
-    model_path = 'my_work/models/{}.pkl'.format(model_name)
+    model_path = '_trained_models/{}.pkl'.format(model_name)
     path = utils.get_abs_path(REPO_DIR, model_path)
     print('model path: {}'.format(path))
     pipeline = utils.load_pickle(path, encoding=False)
@@ -106,7 +109,7 @@ def get_unsex_xgb_impt_d(pipeline):
 
 
 def save_unsex_lr_impt(model_name):
-    model = 'my_work/models/{}.pkl'.format(model_name)
+    model = '_trained_models/{}.pkl'.format(model_name)
     path = utils.get_abs_path(REPO_DIR, model)
     print('model path: {}'.format(path))
     pipeline = utils.load_pickle(path)
@@ -127,7 +130,7 @@ def get_unsex_lr_impt_d(pipeline):
 
 
 def save_unsex_xgb_impt(model_name):
-    model = 'my_work/models/{}.pkl'.format(model_name)
+    model = '_trained_models/{}.pkl'.format(model_name)
     path = utils.get_abs_path(REPO_DIR, model)
     print('model path: {}'.format(path))
     pipeline = utils.load_pickle(path)
@@ -158,6 +161,10 @@ def unsex_wrapper_clf_predict(test_tokens, model=None, model_name=None):
         labels = np.array(model.predict(test_split_tokens, mapping, return_probablity=True))
     elif model_name == "xgboost":
         labels = model.predict_proba(test_tokens)
+    elif 'bert' in model_name:
+        labels = model.predict_batch(test_tokens)
+        labels = [sorted(lp, key=lambda i: i[0]) for lp in labels]
+        labels = np.array([[j[0][1], j[1][1]] for j in labels])
     else:
         labels = model.predict(test_tokens)
         labels = np.array([[0.999, 0.001] if l == -1 else [0.001, 0.999] for l in labels])
@@ -194,10 +201,14 @@ def get_lime(model, test_tokens, model_name):
     return features_l, scores_l
 
 def get_unsex_lime(model, test_tokens, model_name):
-    explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"]) #,
-                                  # split_expression=u'\s+')
+    if 'bert' in model_name:
+        test_tokens = test_tokens[:20]
+    explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"])
     W = []
     for idx, text in enumerate(test_tokens):
+        if len(text) == 0:
+            W.append({'': 0.0})
+            continue
         tmp_d = {}
         for i in text.split():
             tmp_d[i] = 1
@@ -244,12 +255,15 @@ def save_lime_coef(filename, model_name, SAVE_DIR, train_dev_tokens, test_tokens
 
 
 def save_unsex_lime_coef(model_name, test_tokens):
-    model = 'my_work/models/{}.pkl'.format(model_name)
-    path = utils.get_abs_path(REPO_DIR, model)
-    if 'svm' in model_name:
-        model = utils.load_pickle(path, encoding=False)
+    if 'bert' in model_name:
+        model = get_fastbert_model()
     else:
-        model = utils.load_pickle(path)
+        model = '_trained_models/{}.pkl'.format(model_name)
+        path = utils.get_abs_path(REPO_DIR, model)
+        if 'svm' in model_name:
+            model = utils.load_pickle(path, encoding=False)
+        else:
+            model = utils.load_pickle(path)
     features_l, importance_l = get_unsex_lime(model, test_tokens, model_name)
     features = 'features/{}_lime_all_features.pkl'.format(model_name)
     path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
@@ -326,21 +340,30 @@ def save_shap_val(file, name, SAVE_DIR, train_data, test_data):
     utils.save_pickle(importance_l, path)
 
 
-def get_unsex_shap(clf_name, pipeline, test_tokens):
-    feature = pipeline.named_steps['tfidf']
-    clf = pipeline.named_steps['classifier']
+def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
+    if 'bert' in clf_name:
+        feature = TfidfVectorizer(stop_words='english')
+        feature.fit(train_tokens)
+        X_test = pd.Series(test_tokens) # wenn es ne liste is muckt kernelexplainer, wenn es pdSERies, dataframe oder np.array is muckt predict_batch
+        predict_wrapper = lambda ts: [int(p[0][0]) for p in pipeline.predict_batch(ts)]
+    else:
+        feature = pipeline.named_steps['tfidf']
+        clf = pipeline.named_steps['classifier']
+        X_test = feature.transform(test_tokens).toarray()
     vocab = feature.vocabulary_
     index_feature_d = {}
     for word, index in vocab.items():
         index_feature_d[index] = word
-    # X_train = feature.transform(train_tokens)
-    X_test = feature.transform(test_tokens).toarray()
+
     if 'svm' in clf_name:
         explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
     elif 'lr' in clf_name:
         explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
+    elif 'bert' in clf_name:
+        explainer = shap.KernelExplainer(predict_wrapper, X_test, feature_dependence='independent')
     else:
-        explainer = shap.TreeExplainer(clf, feature_dependence='independent', data=X_test)
+        explainer = shap.TreeExplainer(clf, X_test, feature_dependence='independent')
+
     shap_values = explainer.shap_values(X_test)
     # get all features
     features_l, importance_l = [], []
@@ -357,23 +380,18 @@ def get_unsex_shap(clf_name, pipeline, test_tokens):
     return features_l, importance_l
 
 
-def save_unsex_shap_val(name, test_tokens):
-    if 'fastbert' in name:
-        model = FastBERT(
-            kernel_name="google_bert_base_en",
-            labels=[0, 1], device='cuda:0'
-        )
-        model.load_model('my_work/models/{}.bin'.format(name))
+def save_unsex_shap_val(name, train_tokens, test_tokens):
+    if 'bert' in name:
+        model = get_fastbert_model()
     else:
-        model = 'my_work/models/{}.pkl'.format(name)
+        model = '_trained_models/{}.pkl'.format(name)
         path = utils.get_abs_path(REPO_DIR, model)
         print('model path: {}'.format(path))
         if 'svm' in name:
             model = utils.load_pickle(path, encoding=False)
         else:
             model = utils.load_pickle(path)
-    features_l, importance_l = [], []
-    features_l, importance_l = get_unsex_shap(name, model, test_tokens)
+    features_l, importance_l = get_unsex_shap(name, model, train_tokens, test_tokens)
     features = 'features/{}_shap_all_features.pkl'.format(name)
     path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
     utils.save_pickle(features_l, path)
@@ -407,24 +425,25 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    save_unsex_svm_coef('svm_l1')
+    # save_unsex_svm_coef('svm_l1')
     save_unsex_svm_coef('svm')
-    save_unsex_lr_impt('lr')
-    save_unsex_xgb_impt('xgboost')
-
+    # save_unsex_lr_impt('lr')
+    # save_unsex_xgb_impt('xgboost')
+    #
     # lime
-    save_unsex_lime_coef('svm', test_tokens)
-    save_unsex_lime_coef('svm_l1', test_tokens)
+    # save_unsex_lime_coef('svm', test_tokens)
+    # save_unsex_lime_coef('svm_l1', test_tokens)
     save_unsex_lime_coef('lr', test_tokens)
-    save_unsex_lime_coef('xgboost', test_tokens)
-    save_unsex_lime_coef('fast-bert', test_tokens)
+    # save_unsex_lime_coef('xgboost', test_tokens)
+    # save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
-    save_unsex_shap_val('svm', test_tokens)
-    save_unsex_shap_val('svm_l1', test_tokens)
-    save_unsex_shap_val('lr', test_tokens)
-    save_unsex_shap_val('xgboost', test_tokens)
-    save_unsex_shap_val('fast-bert', test_tokens)
+    # training tokens just needed to explain fastbert with shap
+    # save_unsex_shap_val('svm', None, test_tokens)
+    # save_unsex_shap_val('svm_l1', None, test_tokens)
+    save_unsex_shap_val('lr', None, test_tokens)
+    # save_unsex_shap_val('xgboost', None, test_tokens)
+    # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
 if __name__ == "__main__":

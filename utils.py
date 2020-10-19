@@ -5,7 +5,7 @@ import spacy
 from sklearn.model_selection import train_test_split
 import pickle
 import random
-from my_work.unsex_data import UnsexData
+from _data.unsex_data import UnsexData
 import numpy as np
 
 def get_abs_path(save_dir, file_name):

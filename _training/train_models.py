@@ -2,25 +2,34 @@ from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.linear_model import LogisticRegression
-from my_work.unsex_data import UnsexData
+from _data.unsex_data import UnsexData
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from xgboost.sklearn import XGBClassifier
 import spacy
-from my_work.utils import get_fastbert_model
+from _utils.fastbert import get_fastbert_model
 import numpy as np
 import pandas as pd
 # from fastbert import FastBERT
 import os
+from _utils.pathfinder import get_repo_path
 import pickle
 
 nlp = spacy.load("en_core_web_sm")
+
+REPO_DIR = get_repo_path()
+MODELS_DIR = os.path.join(REPO_DIR, '_trained_models')
+REPORTS_DIR = os.path.join(REPO_DIR, '_classification_reports')
 
 
 def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
     """
     Args:
         model (Model object): model to train
+        X_train: Training data
+        X_test: Test data
+        y_train: Training labels
+        y_test: Test labels
         save_as (String): if set model will be saved with this string as filename after training
         report (String): if set this method saves the classification report a csv file with that name
 
@@ -49,7 +58,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
 
         # save svm model trained on unsex data
         if save_as:
-            pickle.dump(pipeline, open(os.path.join('models', f'{save_as}.pkl'), 'wb'))
+            pickle.dump(pipeline, open(os.path.join(MODELS_DIR, f'{save_as}.pkl'), 'wb'))
             print(f'Model saved as {save_as}')
 
     if report:
@@ -58,7 +67,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
         df = pd.DataFrame(classification_report(y_test, y_pred,
                                                 target_names=['non-sexist', 'sexist'],
                                                 output_dict=True)).transpose()
-        df.to_csv(os.path.join('models', '_reports', f'{report}.csv'))
+        df.to_csv(os.path.join(REPORTS_DIR, f'{report}.csv'))
 
 
 if __name__ == '__main__':

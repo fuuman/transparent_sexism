@@ -16,4 +16,13 @@ data/deception/bert_fine_tune/*
 data/yelp/bert_fine_tune/*
 data/sst/bert_fine_tune/*
 
-my_work/models/*
+_classification_reports/
+_data/as_csv/
+_data/icwsm2020_data/
+
+_explanations/unsex/attention_weights/
+_explanations/unsex/feature_importance/
+_explanations/unsex/features/
+_explanations/unsex/tweets/
+
+_trained_models/*
