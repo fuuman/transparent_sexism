@@ -1,7 +1,7 @@
 # Transparent Sexism Classficiation [CODE]
 
 ## Pre
-python version 3.6.11
+python version 3.6.11 <br>
 `pip install -r requirements.txt`
 
 ## Train models
