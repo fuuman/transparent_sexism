@@ -425,24 +425,24 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    # save_unsex_svm_coef('svm_l1')
+    save_unsex_svm_coef('svm_l1')
     save_unsex_svm_coef('svm')
-    # save_unsex_lr_impt('lr')
-    # save_unsex_xgb_impt('xgboost')
+    save_unsex_lr_impt('lr')
+    save_unsex_xgb_impt('xgboost')
     #
     # lime
-    # save_unsex_lime_coef('svm', test_tokens)
-    # save_unsex_lime_coef('svm_l1', test_tokens)
+    save_unsex_lime_coef('svm', test_tokens)
+    save_unsex_lime_coef('svm_l1', test_tokens)
     save_unsex_lime_coef('lr', test_tokens)
-    # save_unsex_lime_coef('xgboost', test_tokens)
-    # save_unsex_lime_coef('fast-bert', test_tokens)
+    save_unsex_lime_coef('xgboost', test_tokens)
+    save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
     # training tokens just needed to explain fastbert with shap
-    # save_unsex_shap_val('svm', None, test_tokens)
-    # save_unsex_shap_val('svm_l1', None, test_tokens)
+    save_unsex_shap_val('svm', None, test_tokens)
+    save_unsex_shap_val('svm_l1', None, test_tokens)
     save_unsex_shap_val('lr', None, test_tokens)
-    # save_unsex_shap_val('xgboost', None, test_tokens)
+    save_unsex_shap_val('xgboost', None, test_tokens)
     # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
