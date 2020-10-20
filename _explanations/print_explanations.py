@@ -3,6 +3,7 @@ import pickle
 import utils
 from _utils.pathfinder import get_repo_path
 from _data.unsex_data import UnsexData
+from _utils.fastbert import get_fastbert_model
 
 
 def _load_tweets():
@@ -35,7 +36,7 @@ def _get_top_k_features(features, scores, k):
 
 def print_explanation(tweet_id, model_name, ex_methods=None, k=4):
     if ex_methods is None:
-        ex_methods = ['lime', 'shap']
+        ex_methods = ['lime',] # 'shap']
     # print(f'###### Explanations ({model_name}) ######')
     for ex_method in ex_methods:
         f, s = _load_features_and_scores(model_name, ex_method)
@@ -48,31 +49,33 @@ def print_prediction_and_label(tweet_id, model_name):
     path = os.path.join(get_repo_path(), '_trained_models', f'{model_name}.pkl')
     if 'svm' in model_name:
         pipeline = utils.load_pickle(path, encoding=False)
+    elif 'bert' in model_name:
+        pipeline = get_fastbert_model()
     else:
         pipeline = utils.load_pickle(path)
     tweet = _load_tweets()[tweet_id]
     ud = UnsexData()
     tweets, labels = ud.get_preprocessed_data()
     label_idx = labels[tweets.index(tweet)]
-    prediction = pipeline.predict([tweet])
+    if 'bert' in model_name:
+        prediction_idx = int(pipeline.predict_batch([tweet])[0][0][0])
+    else:
+        prediction_idx = pipeline.predict([tweet])[0]
     # print(f'###### Classes ######')
-    print(f'Prediction of {model_name.upper()}: {classes[prediction[0]]}')
+    print(f'Prediction of {model_name.upper()}: {classes[prediction_idx]}')
     # print(f'Real class: {classes[label_idx]}')
 
 
 if __name__ == '__main__':
     # current options: svm, svm_l1, lr, xgboost
-    model_name = 'xgboost'
-
-    # current options: lime, shap
-    explanation_method = 'lime'
+    model_name = 'fast-bert'
 
     # filter "unimportant tweets" without non-zero LIME explanations
-    s = _load_features_and_scores(model_name, explanation_method)[1]
+    s = _load_features_and_scores(model_name, 'lime')[1]
     tweet_ids = [tweet_id for tweet_id, scores in enumerate(s) if sum(scores) != 0]
     tweets = _load_tweets()
 
-    for i in tweet_ids[22:34]:
+    for i in tweet_ids[1:3]:
         print('###### Original Tweet ######')
         print(f'{tweets[i]}\n')
         print_explanation(i, model_name)

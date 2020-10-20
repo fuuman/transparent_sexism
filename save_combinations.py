@@ -4,6 +4,7 @@ import shap # use downloaded package instead of local package
 import spacy
 import utils
 # import torch
+from sklearn.model_selection import train_test_split
 # from fastbert import FastBERT
 import pandas as pd
 from _utils.fastbert import get_fastbert_model
@@ -13,6 +14,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import collections
 import numpy as np
 from functools import partial
+from _data.unsex_data import UnsexData
 from collections import OrderedDict
 from sklearn.metrics import accuracy_score
 from _utils.pathfinder import get_repo_path
@@ -344,12 +346,12 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     if 'bert' in clf_name:
         feature = TfidfVectorizer(stop_words='english')
         feature.fit(train_tokens)
-        X_test = pd.Series(test_tokens) # wenn es ne liste is muckt kernelexplainer, wenn es pdSERies, dataframe oder np.array is muckt predict_batch
+        # X_test = pd.DataFrame(test_tokens) # wenn es ne liste is muckt kernelexplainer, wenn es pdSERies, dataframe oder np.array is muckt predict_batch
         predict_wrapper = lambda ts: [int(p[0][0]) for p in pipeline.predict_batch(ts)]
     else:
         feature = pipeline.named_steps['tfidf']
         clf = pipeline.named_steps['classifier']
-        X_test = feature.transform(test_tokens).toarray()
+    X_test = feature.transform(test_tokens).toarray()
     vocab = feature.vocabulary_
     index_feature_d = {}
     for word, index in vocab.items():
@@ -360,7 +362,7 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     elif 'lr' in clf_name:
         explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
     elif 'bert' in clf_name:
-        explainer = shap.KernelExplainer(predict_wrapper, X_test, feature_dependence='independent')
+        explainer = shap.KernelExplainer(predict_wrapper, np.array([[0]]), feature_dependence='independent')
     else:
         explainer = shap.TreeExplainer(clf, X_test, feature_dependence='independent')
 
@@ -425,25 +427,25 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    save_unsex_svm_coef('svm_l1')
-    save_unsex_svm_coef('svm')
-    save_unsex_lr_impt('lr')
-    save_unsex_xgb_impt('xgboost')
+    # save_unsex_svm_coef('svm_l1')
+    # save_unsex_svm_coef('svm')
+    # save_unsex_lr_impt('lr')
+    # save_unsex_xgb_impt('xgboost')
     #
     # lime
-    save_unsex_lime_coef('svm', test_tokens)
-    save_unsex_lime_coef('svm_l1', test_tokens)
-    save_unsex_lime_coef('lr', test_tokens)
-    save_unsex_lime_coef('xgboost', test_tokens)
-    save_unsex_lime_coef('fast-bert', test_tokens)
+    # save_unsex_lime_coef('svm', test_tokens)
+    # save_unsex_lime_coef('svm_l1', test_tokens)
+    # save_unsex_lime_coef('lr', test_tokens)
+    # save_unsex_lime_coef('xgboost', test_tokens)
+    # save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
     # training tokens just needed to explain fastbert with shap
-    save_unsex_shap_val('svm', None, test_tokens)
-    save_unsex_shap_val('svm_l1', None, test_tokens)
-    save_unsex_shap_val('lr', None, test_tokens)
-    save_unsex_shap_val('xgboost', None, test_tokens)
-    # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
+    # save_unsex_shap_val('svm', None, test_tokens)
+    # save_unsex_shap_val('svm_l1', None, test_tokens)
+    # save_unsex_shap_val('lr', None, test_tokens)
+    # save_unsex_shap_val('xgboost', None, test_tokens)
+    save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
 if __name__ == "__main__":
@@ -468,6 +470,8 @@ if __name__ == "__main__":
 
     # my stuff
     print('=== unsex binary ===')
-    train_tokens, test_tokens, train_labels, test_labels = utils.load_data('unsex')
+    ud = UnsexData()
+    X, y = ud.get_preprocessed_data()
+    train_tokens, test_tokens, train_labels, test_labels = train_test_split(X, y, test_size=0.20)
     save_unsex_data(train_tokens, test_tokens)
     save_tokens(test_tokens)
