@@ -403,7 +403,7 @@ def save_unsex_shap_val(name, train_tokens, test_tokens):
 
 
 def save_tokens(test_tokens):
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, 'tweets/tweets.pkl')
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, '_tweets/tweets.pkl')
     utils.save_pickle(test_tokens, path)
 
 
