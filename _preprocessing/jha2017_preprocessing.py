@@ -48,7 +48,7 @@ def preprocess(text, fix_encoding=False):
         if fix_encoding:
             return normalize(detweet(fix_encoding_and_unescape(text)))
         else:
-            return normalize(detweet(text))
+            return normalize(detweet(normalize(text)))
     else:
         return text
 
