@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import pandas as pd
 import os
 import re
+import nltk
+from nltk.corpus import stopwords
 # import preprocessor
 # from bs4 import BeautifulSoup
 import codecs
@@ -21,7 +23,8 @@ url_pattern = re.compile(
     flags=re.UNICODE)
 mention_pattern = re.compile('([^a-zA-Z0-9]|^)@\S+', flags=re.UNICODE)
 hashtag_pattern = re.compile('([^a-zA-Z0-9]|^)#\S+', flags=re.UNICODE)
-rt_pattern = re.compile('([^a-zA-Z0-9]|^)(rt|ht|cc)([^a-zA-Z0-9]|$)', flags=re.UNICODE)
+rt_pattern = re.compile('([^a-zA-Z0-9]|^)(rt|RT|ht|cc)([^a-zA-Z0-9]|$)', flags=re.UNICODE)
+stop_words = set(stopwords.words('english'))
 
 
 def detweet(text):
@@ -31,6 +34,10 @@ def detweet(text):
                                 re.sub(hashtag_pattern, '',
                                        re.sub(emoji_pattern, '',
                                               text)))))
+
+
+def remove_stopwords(text):
+    return ' '.join([word for word in text.split() if word not in stop_words])
 
 
 def normalize(text):
@@ -45,10 +52,7 @@ def normalize(text):
 
 def preprocess(text, fix_encoding=False):
     if (type(text) == str): # or (type(text) == unicode):
-        if fix_encoding:
-            return normalize(detweet(fix_encoding_and_unescape(text)))
-        else:
-            return normalize(detweet(normalize(text)))
+        return remove_stopwords(normalize(detweet(text)))
     else:
         return text
 
