@@ -1,5 +1,4 @@
 from sklearn.svm import LinearSVC
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.linear_model import LogisticRegression
 from _data.unsex_data import UnsexData
@@ -51,7 +50,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
         predictions = model.predict_batch(X_test)
         y_pred = np.array([int(p[0][0]) for p in predictions])
     else:
-        pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer(stop_words='english')), ('classifier', model)])
+        pipeline = Pipeline(steps=[('tfidf', TfidfVectorizer()), ('classifier', model)])
 
         pipeline.fit(X_train, y_train)
         y_pred = pipeline.predict(X_test)
@@ -70,13 +69,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None):
         df.to_csv(os.path.join(REPORTS_DIR, f'{report}.csv'))
 
 
-if __name__ == '__main__':
-    ud = UnsexData()
-
-    X, y = ud.get_preprocessed_data()
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
-
+def train_all(X_train, X_test, y_train, y_test):
     print('###### SVM L1 ######')
     svm_l1 = LinearSVC(loss='squared_hinge', penalty='l1', dual=False)
     train(svm_l1, X_train, X_test, y_train, y_test, save_as='svm_l1', report='svm_l1')
@@ -101,7 +94,7 @@ if __name__ == '__main__':
     # )
 
     # pypi package 'fast-bert'
-    ud.save_as_csv(X_train, X_test, y_train, y_test)
+    # ud.save_as_csv(X_train, X_test, y_train, y_test)
     fastbert = get_fastbert_model()
     train(fastbert, X_train, X_test, y_train, y_test, report='fast-bert')
 

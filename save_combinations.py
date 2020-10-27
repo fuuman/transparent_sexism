@@ -373,7 +373,7 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
         word_shap_val_d = {}
         for idx_b, shap_val in enumerate(row):
             feature = index_feature_d[idx_b]
-            word_shap_val_d[feature] = abs(shap_val) # taking absolute value
+            word_shap_val_d[feature] = abs(shap_val)  # taking absolute value
         features_tmp = list(word_shap_val_d.keys())
         features = " ".join(features_tmp)
         features_l.append(features)
@@ -403,7 +403,7 @@ def save_unsex_shap_val(name, train_tokens, test_tokens):
 
 
 def save_tokens(test_tokens):
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, '_tweets/tweets.pkl')
+    path = utils.get_abs_path(SAVE_UNSEX_DIR, 'tweets/tweets.pkl')
     utils.save_pickle(test_tokens, path)
 
 
@@ -427,51 +427,30 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    # save_unsex_svm_coef('svm_l1')
-    # save_unsex_svm_coef('svm')
-    # save_unsex_lr_impt('lr')
-    # save_unsex_xgb_impt('xgboost')
+    save_unsex_svm_coef('svm_l1')
+    save_unsex_svm_coef('svm')
+    save_unsex_lr_impt('lr')
+    save_unsex_xgb_impt('xgboost')
     #
     # lime
-    # save_unsex_lime_coef('svm', test_tokens)
-    # save_unsex_lime_coef('svm_l1', test_tokens)
-    # save_unsex_lime_coef('lr', test_tokens)
-    # save_unsex_lime_coef('xgboost', test_tokens)
-    # save_unsex_lime_coef('fast-bert', test_tokens)
+    save_unsex_lime_coef('svm', test_tokens)
+    save_unsex_lime_coef('svm_l1', test_tokens)
+    save_unsex_lime_coef('lr', test_tokens)
+    save_unsex_lime_coef('xgboost', test_tokens)
+    save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
     # training tokens just needed to explain fastbert with shap
-    # save_unsex_shap_val('svm', None, test_tokens)
-    # save_unsex_shap_val('svm_l1', None, test_tokens)
-    # save_unsex_shap_val('lr', None, test_tokens)
-    # save_unsex_shap_val('xgboost', None, test_tokens)
-    save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
+    save_unsex_shap_val('svm', None, test_tokens)
+    save_unsex_shap_val('svm_l1', None, test_tokens)
+    save_unsex_shap_val('lr', None, test_tokens)
+    save_unsex_shap_val('xgboost', None, test_tokens)
+    # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
-if __name__ == "__main__":
-    # 1x save_data pro dataset bzw. classification task (deception, yelp, sst)
-    ### deception dataset
-    # print('=== deception ===')
-    # train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
-    # train_labels, dev_labels, train_dev_labels, test_labels = utils.load_data('deception')
-    # save_data(SAVE_DECEPTION_DIR, train_dev_tokens, test_tokens)
-
-    ### yelp binary dataset
-    # print('=== yelp binary ===')
-    # train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
-    # train_labels, dev_labels, train_dev_labels, test_labels = utils.load_data('yelp')
-    # save_data(SAVE_YELP_DIR, train_dev_tokens, test_tokens)
-    
-    ### sst binary dataset
-    # ('=== sst binary ===')
-    # train_tokens, dev_tokens, train_dev_tokens, test_tokens, \
-    # train_labels, dev_labels, train_dev_labels, test_labels = utils.load_data('sst')
-    # save_data(SAVE_SST_DIR, train_dev_tokens, test_tokens)
-
+def explain_all(X_train, X_test):
     # my stuff
     print('=== unsex binary ===')
-    ud = UnsexData()
-    X, y = ud.get_preprocessed_data()
-    train_tokens, test_tokens, train_labels, test_labels = train_test_split(X, y, test_size=0.20)
-    save_unsex_data(train_tokens, test_tokens)
-    save_tokens(test_tokens)
+    save_unsex_data(X_train, X_test)
+    save_tokens(X_test)
+

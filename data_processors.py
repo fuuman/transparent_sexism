@@ -401,4 +401,7 @@ class UnsexProcessor(DataProcessor):
             label = line[1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
-        return examples
+        if set_type == 'test':
+            return examples[:200]
+        else:
+            return examples
