@@ -2,8 +2,10 @@ import re
 import os
 import shap # use downloaded package instead of local package
 import spacy
+from joblib import Parallel, delayed
 import utils
 # import torch
+import time
 from sklearn.model_selection import train_test_split
 # from fastbert import FastBERT
 import pandas as pd
@@ -12,10 +14,12 @@ import pickle
 # import lstm as lc
 from sklearn.feature_extraction.text import TfidfVectorizer
 import collections
+from tqdm import tqdm
 import numpy as np
 from functools import partial
 from _data.unsex_data import UnsexData
 from collections import OrderedDict
+from _utils.pathfinder import get_repo_path
 from sklearn.metrics import accuracy_score
 from _utils.pathfinder import get_repo_path
 from lime.lime_text import LimeTextExplainer
@@ -202,27 +206,44 @@ def get_lime(model, test_tokens, model_name):
         scores_l.append(scores)
     return features_l, scores_l
 
+def run_explain(text, idx, model, model_name):
+    explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"], split_expression=u'\W+')
+    if len(text) == 0:
+        return {'': 0.0}
+    tmp_d = {}
+    for i in text.split():
+        tmp_d[i] = 1
+    exp = explainer.explain_instance(text,
+                                     partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
+                                     num_features=len(text.split()),
+                                     num_samples=1000)
+    print(f'explain finished for #{idx + 1}/816: {text}')
+    if len(tmp_d) != len(exp.as_list()):
+        print(idx, len(tmp_d), len(dict(exp.as_list())))
+    return dict(exp.as_list())
+
+
 def get_unsex_lime(model, test_tokens, model_name):
-    if 'bert' in model_name:
-        test_tokens = test_tokens[:20]
-    explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"])
-    W = []
-    for idx, text in enumerate(test_tokens):
-        if len(text) == 0:
-            W.append({'': 0.0})
-            continue
-        tmp_d = {}
-        for i in text.split():
-            tmp_d[i] = 1
-        exp = explainer.explain_instance(text,
-                                         partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
-                                         num_features=len(text.split()),
-                                         num_samples=1000)
-        if len(tmp_d) != len(exp.as_list()):
-            print(idx, len(tmp_d), len(dict(exp.as_list())))
-        W.append(dict(exp.as_list()))
-        if (idx+1) % 10 == 0:
-            print('{} instances have been processed..'.format(idx+1))
+    # explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"])
+    # W = []
+    # for idx, text in enumerate(test_tokens):
+    #     if len(text) == 0:
+    #         W.append({'': 0.0})
+    #         continue
+    #     tmp_d = {}
+    #     for i in text.split():
+    #         tmp_d[i] = 1
+    #     exp = explainer.explain_instance(text,
+    #                                      partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
+    #                                      num_features=len(text.split()),
+    #                                      num_samples=1000)
+    #     if len(tmp_d) != len(exp.as_list()):
+    #         print(idx, len(tmp_d), len(dict(exp.as_list())))
+    #     W.append(dict(exp.as_list()))
+    #     if (idx+1) % 10 == 0:
+    #         print('{} instances have been processed..'.format(idx+1))
+    W = Parallel(n_jobs=4)(delayed(run_explain)(text, idx, model, model_name) for idx, text in enumerate(test_tokens[:10]))
+
     features_l, scores_l = [], []
     for d in W:
         features, scores = [], []
@@ -267,12 +288,10 @@ def save_unsex_lime_coef(model_name, test_tokens):
         else:
             model = utils.load_pickle(path)
     features_l, importance_l = get_unsex_lime(model, test_tokens, model_name)
-    features = 'features/{}_lime_all_features.pkl'.format(model_name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
-    utils.save_pickle(features_l, path)
-    scores = 'feature_importance/{}_lime_all_scores.pkl'.format(model_name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, scores)
-    utils.save_pickle(importance_l, path)
+    path = '_explanations/unsex/features/{}_lime_all_features.pkl'.format(model_name)
+    utils.save_pickle(features_l, os.path.join(get_repo_path(), path))
+    path = '_explanations/unsex/feature_importance/{}_lime_all_scores.pkl'.format(model_name)
+    utils.save_pickle(importance_l, os.path.join(get_repo_path(), path))
 
 
 def split_tokens(l):
@@ -427,24 +446,24 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
 def save_unsex_data(train_tokens, test_tokens):
     ### unsex me stuff
     # built-in
-    save_unsex_svm_coef('svm_l1')
-    save_unsex_svm_coef('svm')
-    save_unsex_lr_impt('lr')
-    save_unsex_xgb_impt('xgboost')
+    # save_unsex_svm_coef('svm_l1')
+    # save_unsex_svm_coef('svm')
+    # save_unsex_lr_impt('lr')
+    # save_unsex_xgb_impt('xgboost')
     #
     # lime
-    save_unsex_lime_coef('svm', test_tokens)
-    save_unsex_lime_coef('svm_l1', test_tokens)
-    save_unsex_lime_coef('lr', test_tokens)
-    save_unsex_lime_coef('xgboost', test_tokens)
+    # save_unsex_lime_coef('svm', test_tokens)
+    # save_unsex_lime_coef('svm_l1', test_tokens)
+    # save_unsex_lime_coef('lr', test_tokens)
+    # save_unsex_lime_coef('xgboost', test_tokens)
     save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
     # training tokens just needed to explain fastbert with shap
-    save_unsex_shap_val('svm', None, test_tokens)
-    save_unsex_shap_val('svm_l1', None, test_tokens)
-    save_unsex_shap_val('lr', None, test_tokens)
-    save_unsex_shap_val('xgboost', None, test_tokens)
+    # save_unsex_shap_val('svm', None, test_tokens)
+    # save_unsex_shap_val('svm_l1', None, test_tokens)
+    # save_unsex_shap_val('lr', None, test_tokens)
+    # save_unsex_shap_val('xgboost', None, test_tokens)
     # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
@@ -452,5 +471,11 @@ def explain_all(X_train, X_test):
     # my stuff
     print('=== unsex binary ===')
     save_unsex_data(X_train, X_test)
-    save_tokens(X_test)
 
+
+if __name__ == '__main__':
+    with open('_explanations/unsex/used_training_data/X_test.pkl', 'rb') as f:
+        X_test = pickle.load(f)
+    s = time.time()
+    explain_all(None, X_test[:4])
+    print(time.time() - s)

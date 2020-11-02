@@ -3,6 +3,7 @@ import pandas as pd
 from _utils.pathfinder import get_repo_path
 from sklearn.preprocessing import LabelEncoder
 from _preprocessing.jha2017_preprocessing import preprocess_jha2017
+from sklearn.model_selection import train_test_split
 
 
 class UnsexData:
@@ -15,7 +16,6 @@ class UnsexData:
         self.all_data = pd.read_csv(self.ALL_DATA_FILE_PATH, sep='\t')
         # self.all_data_annotations = pd.read_csv(self.ALL_DATA_ANNOTATIONS_FILE_PATH, sep='\t')
 
-    def get_raw_data(self):
         # load data in dataframe
         df = pd.DataFrame(self.all_data)
 
@@ -27,14 +27,20 @@ class UnsexData:
         y = pd.DataFrame(df['sexist'].dropna())
         y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
         y = y.to_numpy().ravel()
-        return X, y
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.20)
+
+    def get_raw_test_tweets(self):
+        return self.X_test
 
     def get_preprocessed_data(self):
         # preprocessing by jha et al. 2017
-        X, y = self.get_raw_data()
-        return list(preprocess_jha2017(X)), y
+        return list(preprocess_jha2017(self.X_train)), \
+               list(preprocess_jha2017(self.X_test)), \
+               self.y_train, \
+               self.y_test
 
-    def save_as_csv(self, X_train, X_test, y_train, y_test):
+    def save_as_csv(self):
+        X_train, X_test, y_train, y_test = self.get_preprocessed_data()
         # save training data as train.csv and test data as val.csv to train fast-bert
         # see: https://github.com/kaushaltrivedi/fast-bert
         df = pd.DataFrame(zip(X_train, y_train), columns=['text', 'label'])
