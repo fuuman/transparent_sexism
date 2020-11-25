@@ -1,32 +1,31 @@
 import os
 from _utils.pathfinder import get_repo_path
 import pickle
+import numpy as np
 
 
 class TweetLoader:
-    def __init__(self):
+    def __init__(self, experiment):
+        self.experiment = experiment
         self.tweets = self._load_test_tweets()
         self.raw_tweets = self._load_raw_test_tweets()
         self.labels = self._load_labels()
 
-    @staticmethod
-    def _load_raw_test_tweets():
-        path = os.path.join(get_repo_path(), '_explanations', 'unsex')
-        with open(os.path.join(path, 'used_training_data', 'X_test_raw.pkl'), 'rb') as f:
+    def _load_raw_test_tweets(self):
+        path = os.path.join(get_repo_path(), '_experiments', self.experiment.name)
+        with open(os.path.join(path, 'used_data', 'X_test_raw.pkl'), 'rb') as f:
             tweets = pickle.load(f)
         return tweets
 
-    @staticmethod
-    def _load_test_tweets():
-        path = os.path.join(get_repo_path(), '_explanations', 'unsex')
-        with open(os.path.join(path, 'used_training_data', 'X_test.pkl'), 'rb') as f:
+    def _load_test_tweets(self):
+        path = os.path.join(get_repo_path(), '_experiments', self.experiment.name)
+        with open(os.path.join(path, 'used_data', 'X_test.pkl'), 'rb') as f:
             tweets = pickle.load(f)
         return tweets
 
-    @staticmethod
-    def _load_labels():
-        path = os.path.join(get_repo_path(), '_explanations', 'unsex')
-        with open(os.path.join(path, 'used_training_data', 'y_test.pkl'), 'rb') as f:
+    def _load_labels(self):
+        path = os.path.join(get_repo_path(), '_experiments', self.experiment.name)
+        with open(os.path.join(path, 'used_data', 'y_test.pkl'), 'rb') as f:
             labels = pickle.load(f)
         return labels
 
@@ -38,3 +37,6 @@ class TweetLoader:
 
     def get_tweet_label_from_id(self, id):
         return self.labels[id]
+
+    def get_raw_tweets_from_ids(self, ids):
+        return list(np.array(self.raw_tweets)[ids])
