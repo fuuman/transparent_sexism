@@ -28,3 +28,8 @@ _explanations/unsex/tweets/
 _trained_models/*
 
 _data/icwsm2020_data/*
+
+*.pkl
+*.png
+*.csv
+*.txt
