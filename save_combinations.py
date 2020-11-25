@@ -21,7 +21,7 @@ from _data.unsex_data import UnsexData
 from collections import OrderedDict
 from _utils.pathfinder import get_repo_path
 from sklearn.metrics import accuracy_score
-from _utils.pathfinder import get_repo_path
+from _utils.pathfinder import get_repo_path, get_experiment_path
 from lime.lime_text import LimeTextExplainer
 import warnings
 warnings.filterwarnings('ignore')
@@ -35,17 +35,6 @@ SAVE_YELP_DIR = os.path.join(DATA_ROOT, 'yelp')
 SAVE_SST_DIR = os.path.join(DATA_ROOT, 'sst')
 SAVE_UNSEX_DIR = os.path.join(DATA_ROOT, 'unsex')
 
-def get_svm_coef_d(pipeline):
-    classifier = pipeline.named_steps['clf']
-    feature = pipeline.named_steps['feature']
-    coefficients = classifier.coef_[0]
-    vocabulary = feature.vocabulary_
-    d = {}
-    for word, index in vocabulary.items():
-        score = float(coefficients[index])
-        d[str(word)] = score
-    return d
-
 
 def get_unsex_svm_coef_d(pipeline):
     classifier = pipeline.named_steps['classifier']
@@ -58,50 +47,22 @@ def get_unsex_svm_coef_d(pipeline):
         d[str(word)] = score
     return d
 
-
-def save_svm_coef(file, name, SAVE_DIR):
-    model = 'models/{}.pkl'.format(file)
-    path = utils.get_abs_path(SAVE_DIR, model)
-    print('model path: {}'.format(path))
-    pipeline = None
-    if file == 'svm':
-        pipeline = utils.load_pickle(path, encoding=False)
+def save_unsex_svm_coef(model_name, experiment=None):
+    if experiment:
+        path = os.path.join(get_experiment_path(experiment), 'models', '{}.pkl'.format(model_name))
     else:
-        pipeline = utils.load_pickle(path)
-    svm_coef_d = get_svm_coef_d(pipeline)
-    features = 'features/{}_coef_all_features.pkl'.format(name)
-    path = utils.get_abs_path(SAVE_DIR, features)
-    utils.save_pickle(svm_coef_d, path)
-
-def save_unsex_svm_coef(model_name):
-    model_path = '_trained_models/{}.pkl'.format(model_name)
-    path = utils.get_abs_path(REPO_DIR, model_path)
+        model_path = '_trained_models/{}.pkl'.format(model_name)
+        path = utils.get_abs_path(REPO_DIR, model_path)
     print('model path: {}'.format(path))
     pipeline = utils.load_pickle(path, encoding=False)
     svm_coef_d = get_unsex_svm_coef_d(pipeline)
-    features = 'features/{}_coef_all_features.pkl'.format(model_name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+    if experiment:
+        features = 'explanations/features/{}_builtin_all_features.pkl'.format(model_name)
+        path = os.path.join(get_experiment_path(experiment), features)
+    else:
+        features = 'features/{}_builtin_all_features.pkl'.format(model_name)
+        path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
     utils.save_pickle(svm_coef_d, path)
-
-def get_xgb_impt_d(pipeline):
-    importance = pipeline.named_steps['clf'].feature_importances_
-    vocab = pipeline.named_steps['feature'].vocabulary_
-    d = {}
-    for word, index in vocab.items():
-        score = float(importance[index])
-        d[str(word)] = score
-    return d
-
-def save_xgb_impt(file, name, SAVE_DIR):
-    model = 'models/{}.pkl'.format(file)
-    path = utils.get_abs_path(SAVE_DIR, model)
-    print('model path: {}'.format(path))
-    pipeline = utils.load_pickle(path)
-    xgb_impt_d = get_xgb_impt_d(pipeline)
-    features = 'features/{}_impt_all_features.pkl'.format(name)
-    path = utils.get_abs_path(SAVE_DIR, features)
-    utils.save_pickle(xgb_impt_d, path)
-
 
 def get_unsex_xgb_impt_d(pipeline):
     importance = pipeline.named_steps['classifier'].feature_importances_
@@ -112,16 +73,39 @@ def get_unsex_xgb_impt_d(pipeline):
         d[str(word)] = score
     return d
 
+def save_unsex_xgb_impt(model_name, experiment=None):
+    if experiment:
+        path = os.path.join(get_experiment_path(experiment), 'models', '{}.pkl'.format(model_name))
+    else:
+        model = '_trained_models/{}.pkl'.format(model_name)
+        path = utils.get_abs_path(REPO_DIR, model)
+    print('model path: {}'.format(path))
+    pipeline = utils.load_pickle(path)
+    xgb_impt_d = get_unsex_xgb_impt_d(pipeline)
+    if experiment:
+        features = 'explanations/features/{}_builtin_all_features.pkl'.format(model_name)
+        path = os.path.join(get_experiment_path(experiment), features)
+    else:
+        features = 'features/{}_builtin_all_features.pkl'.format(model_name)
+        path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+    utils.save_pickle(xgb_impt_d, path)
 
 
-def save_unsex_lr_impt(model_name):
-    model = '_trained_models/{}.pkl'.format(model_name)
-    path = utils.get_abs_path(REPO_DIR, model)
+def save_unsex_lr_impt(model_name, experiment=None):
+    if experiment:
+        path = os.path.join(get_experiment_path(experiment), 'models', '{}.pkl'.format(model_name))
+    else:
+        model = '_trained_models/{}.pkl'.format(model_name)
+        path = utils.get_abs_path(REPO_DIR, model)
     print('model path: {}'.format(path))
     pipeline = utils.load_pickle(path)
     lr_impt_d = get_unsex_lr_impt_d(pipeline)
-    features = 'features/{}_impt_all_features.pkl'.format(model_name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+    if experiment:
+        features = 'explanations/features/{}_builtin_all_features.pkl'.format(model_name)
+        path = os.path.join(get_experiment_path(experiment), features)
+    else:
+        features = 'features/{}_builtin_all_features.pkl'.format(model_name)
+        path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
     utils.save_pickle(lr_impt_d, path)
 
 
@@ -135,15 +119,6 @@ def get_unsex_lr_impt_d(pipeline):
     return d
 
 
-def save_unsex_xgb_impt(model_name):
-    model = '_trained_models/{}.pkl'.format(model_name)
-    path = utils.get_abs_path(REPO_DIR, model)
-    print('model path: {}'.format(path))
-    pipeline = utils.load_pickle(path)
-    xgb_impt_d = get_unsex_xgb_impt_d(pipeline)
-    features = 'features/{}_impt_all_features.pkl'.format(model_name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
-    utils.save_pickle(xgb_impt_d, path)
 
 
 def wrapper_clf_predict(test_tokens, model=None, model_name=None):
@@ -217,32 +192,33 @@ def run_explain(text, idx, model, model_name):
                                      partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
                                      num_features=len(text.split()),
                                      num_samples=1000)
-    print(f'explain finished for #{idx + 1}/816: {text}')
+    # print(f'explain finished for #{idx + 1}/816: {text}')
     if len(tmp_d) != len(exp.as_list()):
         print(idx, len(tmp_d), len(dict(exp.as_list())))
     return dict(exp.as_list())
 
 
 def get_unsex_lime(model, test_tokens, model_name):
-    # explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"])
-    # W = []
-    # for idx, text in enumerate(test_tokens):
-    #     if len(text) == 0:
-    #         W.append({'': 0.0})
-    #         continue
-    #     tmp_d = {}
-    #     for i in text.split():
-    #         tmp_d[i] = 1
-    #     exp = explainer.explain_instance(text,
-    #                                      partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
-    #                                      num_features=len(text.split()),
-    #                                      num_samples=1000)
-    #     if len(tmp_d) != len(exp.as_list()):
-    #         print(idx, len(tmp_d), len(dict(exp.as_list())))
-    #     W.append(dict(exp.as_list()))
-    #     if (idx+1) % 10 == 0:
-    #         print('{} instances have been processed..'.format(idx+1))
-    W = Parallel(n_jobs=4)(delayed(run_explain)(text, idx, model, model_name) for idx, text in enumerate(test_tokens[:10]))
+    explainer = LimeTextExplainer(class_names=["non-sexist", "sexist"])
+    W = []
+    for idx, text in tqdm(enumerate(test_tokens)):
+        if len(text) == 0:
+            W.append({'': 0.0})
+            continue
+        tmp_d = {}
+        for i in text.split():
+            tmp_d[i] = 1
+        exp = explainer.explain_instance(text,
+                                         partial(unsex_wrapper_clf_predict, model=model, model_name=model_name),
+                                         num_features=len(text.split()),
+                                         num_samples=1000)
+        if len(tmp_d) != len(exp.as_list()):
+            print(idx, len(tmp_d), len(dict(exp.as_list())))
+        W.append(dict(exp.as_list()))
+        # if (idx+1) % 10 == 0:
+        #     print('{} instances have been processed..'.format(idx+1))
+    # W = Parallel(n_jobs=4)(delayed(run_explain)(text, idx, model, model_name) for idx, text in enumerate(test_tokens[:10]))
+    # W = [run_explain(text, idx, model, model_name) for idx, text in enumerate(test_tokens)]
 
     features_l, scores_l = [], []
     for d in W:
@@ -277,21 +253,30 @@ def save_lime_coef(filename, model_name, SAVE_DIR, train_dev_tokens, test_tokens
     utils.save_pickle(importance_l, path)
 
 
-def save_unsex_lime_coef(model_name, test_tokens):
+def save_unsex_lime_coef(model_name, test_tokens, experiment=None):
     if 'bert' in model_name:
         model = get_fastbert_model()
     else:
-        model = '_trained_models/{}.pkl'.format(model_name)
-        path = utils.get_abs_path(REPO_DIR, model)
+        if experiment:
+            path = os.path.join(get_experiment_path(experiment), 'models', '{}.pkl'.format(model_name))
+        else:
+            model = '_trained_models/{}.pkl'.format(model_name)
+            path = utils.get_abs_path(REPO_DIR, model)
         if 'svm' in model_name:
             model = utils.load_pickle(path, encoding=False)
         else:
             model = utils.load_pickle(path)
     features_l, importance_l = get_unsex_lime(model, test_tokens, model_name)
-    path = '_explanations/unsex/features/{}_lime_all_features.pkl'.format(model_name)
-    utils.save_pickle(features_l, os.path.join(get_repo_path(), path))
-    path = '_explanations/unsex/feature_importance/{}_lime_all_scores.pkl'.format(model_name)
-    utils.save_pickle(importance_l, os.path.join(get_repo_path(), path))
+    if experiment:
+        path = os.path.join(get_experiment_path(experiment), 'explanations/features/{}_lime_all_features.pkl'.format(model_name))
+        utils.save_pickle(features_l, os.path.join(get_repo_path(), path))
+        path = os.path.join(get_experiment_path(experiment), 'explanations/feature_importance/{}_lime_all_scores.pkl'.format(model_name))
+        utils.save_pickle(importance_l, os.path.join(get_repo_path(), path))
+    else:
+        path = '_explanations/unsex/features/{}_lime_all_features.pkl'.format(model_name)
+        utils.save_pickle(features_l, os.path.join(get_repo_path(), path))
+        path = '_explanations/unsex/feature_importance/{}_lime_all_scores.pkl'.format(model_name)
+        utils.save_pickle(importance_l, os.path.join(get_repo_path(), path))
 
 
 def split_tokens(l):
@@ -365,28 +350,33 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     if 'bert' in clf_name:
         feature = TfidfVectorizer(stop_words='english')
         feature.fit(train_tokens)
-        # X_test = pd.DataFrame(test_tokens) # wenn es ne liste is muckt kernelexplainer, wenn es pdSERies, dataframe oder np.array is muckt predict_batch
-        predict_wrapper = lambda ts: [int(p[0][0]) for p in pipeline.predict_batch(ts)]
+        # X_test = pd.DataFrame(test_tokens)
+        predict_wrapper = lambda ts: np.array([int(p[0][0]) for p in pipeline.predict_batch([x[0] for x in ts])])
     else:
         feature = pipeline.named_steps['tfidf']
         clf = pipeline.named_steps['classifier']
-    X_test = feature.transform(test_tokens).toarray()
+    X_test = feature.transform(test_tokens)
+    X_train = feature.transform(train_tokens)
     vocab = feature.vocabulary_
     index_feature_d = {}
     for word, index in vocab.items():
         index_feature_d[index] = word
 
     if 'svm' in clf_name:
-        explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
+        # explainer = shap.LinearExplainer(clf, data=X_train, feature_dependence="independent")
+        explainer = shap.LinearExplainer(clf, data=np.zeros(X_train.shape), feature_dependence="independent")
     elif 'lr' in clf_name:
-        explainer = shap.LinearExplainer(clf, X_test, feature_dependence="independent")
+        # explainer = shap.LinearExplainer(clf, data=X_train, feature_dependence="independent")
+        explainer = shap.LinearExplainer(clf, data=np.zeros(X_train.shape), feature_dependence="independent")
     elif 'bert' in clf_name:
         explainer = shap.KernelExplainer(predict_wrapper, np.array([[0]]), feature_dependence='independent')
     else:
-        explainer = shap.TreeExplainer(clf, X_test, feature_dependence='independent')
+        # explainer = shap.TreeExplainer(clf, data=None, feature_dependence='independent')
+        explainer = shap.TreeExplainer(clf, data=None, feature_dependence='independent')
 
     shap_values = explainer.shap_values(X_test)
     # get all features
+
     features_l, importance_l = [], []
     for idx, row in enumerate(shap_values):
         word_shap_val_d = {}
@@ -401,24 +391,33 @@ def get_unsex_shap(clf_name, pipeline, train_tokens, test_tokens):
     return features_l, importance_l
 
 
-def save_unsex_shap_val(name, train_tokens, test_tokens):
+def save_unsex_shap_val(name, train_tokens, test_tokens, experiment=None):
     if 'bert' in name:
         model = get_fastbert_model()
     else:
-        model = '_trained_models/{}.pkl'.format(name)
-        path = utils.get_abs_path(REPO_DIR, model)
+        if experiment:
+            path = os.path.join(get_experiment_path(experiment), 'models', '{}.pkl'.format(name))
+        else:
+            model = '_trained_models/{}.pkl'.format(name)
+            path = utils.get_abs_path(REPO_DIR, model)
         print('model path: {}'.format(path))
         if 'svm' in name:
             model = utils.load_pickle(path, encoding=False)
         else:
             model = utils.load_pickle(path)
     features_l, importance_l = get_unsex_shap(name, model, train_tokens, test_tokens)
-    features = 'features/{}_shap_all_features.pkl'.format(name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
-    utils.save_pickle(features_l, path)
-    scores = 'feature_importance/{}_shap_all_scores.pkl'.format(name)
-    path = utils.get_abs_path(SAVE_UNSEX_DIR, scores)
-    utils.save_pickle(importance_l, path)
+    if experiment:
+        path = os.path.join(get_experiment_path(experiment), 'explanations', 'features/{}_shap_all_features.pkl'.format(name))
+        utils.save_pickle(features_l, path)
+        path = os.path.join(get_experiment_path(experiment), 'explanations', 'feature_importance/{}_shap_all_scores.pkl'.format(name))
+        utils.save_pickle(importance_l, path)
+    else:
+        features = 'features/{}_shap_all_features.pkl'.format(name)
+        path = utils.get_abs_path(SAVE_UNSEX_DIR, features)
+        utils.save_pickle(features_l, path)
+        scores = 'feature_importance/{}_shap_all_scores.pkl'.format(name)
+        path = utils.get_abs_path(SAVE_UNSEX_DIR, scores)
+        utils.save_pickle(importance_l, path)
 
 
 def save_tokens(test_tokens):
@@ -443,39 +442,41 @@ def save_data(SAVE_DIR, train_dev_tokens, test_tokens):
     # save_shap_val('xgb', 'xgb', SAVE_DIR, train_dev_tokens, test_tokens)
 
 
-def save_unsex_data(train_tokens, test_tokens):
+def save_unsex_data(train_tokens, test_tokens, experiment=None):
     ### unsex me stuff
     # built-in
     # save_unsex_svm_coef('svm_l1')
-    # save_unsex_svm_coef('svm')
-    # save_unsex_lr_impt('lr')
-    # save_unsex_xgb_impt('xgboost')
+    save_unsex_svm_coef('svm', experiment=experiment)
+    save_unsex_lr_impt('lr', experiment=experiment)
+    save_unsex_xgb_impt('xgboost', experiment=experiment)
     #
     # lime
-    # save_unsex_lime_coef('svm', test_tokens)
     # save_unsex_lime_coef('svm_l1', test_tokens)
-    # save_unsex_lime_coef('lr', test_tokens)
-    # save_unsex_lime_coef('xgboost', test_tokens)
-    save_unsex_lime_coef('fast-bert', test_tokens)
+    save_unsex_lime_coef('svm', test_tokens, experiment=experiment)
+    save_unsex_lime_coef('lr', test_tokens, experiment=experiment)
+    save_unsex_lime_coef('xgboost', test_tokens, experiment=experiment)
+    # save_unsex_lime_coef('fast-bert', test_tokens)
 
     # shap
     # training tokens just needed to explain fastbert with shap
-    # save_unsex_shap_val('svm', None, test_tokens)
     # save_unsex_shap_val('svm_l1', None, test_tokens)
-    # save_unsex_shap_val('lr', None, test_tokens)
-    # save_unsex_shap_val('xgboost', None, test_tokens)
+    save_unsex_shap_val('svm', train_tokens, test_tokens, experiment=experiment)
+    save_unsex_shap_val('lr', train_tokens, test_tokens, experiment=experiment)
+    save_unsex_shap_val('xgboost', train_tokens, test_tokens, experiment=experiment)
     # save_unsex_shap_val('fast-bert', train_tokens, test_tokens)
 
 
-def explain_all(X_train, X_test):
+def explain_all(X_train, X_test, experiment=None):
     # my stuff
     print('=== unsex binary ===')
-    save_unsex_data(X_train, X_test)
+    save_unsex_data(X_train, X_test, experiment=experiment)
 
 
 if __name__ == '__main__':
-    with open('_explanations/unsex/used_training_data/X_test.pkl', 'rb') as f:
+    with open('_explanations/unsex/used_training_data/X_test_explainable.pkl', 'rb') as f:
         X_test = pickle.load(f)
+    with open('_explanations/unsex/used_training_data/X_train.pkl', 'rb') as f:
+        X_train = pickle.load(f)
     s = time.time()
-    explain_all(None, X_test[:4])
+    explain_all(X_train, X_test)
     print(time.time() - s)
