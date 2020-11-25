@@ -6,6 +6,7 @@ import os
 from tqdm import tqdm
 from _utils.tweet_loader import TweetLoader
 from _utils.explanation_loader import ExplanationLoader
+from _utils.explanations_helper import get_explainable_tweet_ids
 from _utils.trained_model_loader import TrainedModelLoader
 import logging
 from _utils.pathfinder import get_experiment_path
@@ -43,7 +44,9 @@ if __name__ == '__main__':
         # pickle.dump(y_train, open(os.path.join(path, 'y_train.pkl'), "wb"))
         # pickle.dump(y_test, open(os.path.join(path, 'y_test.pkl'), "wb"))
 
-        # create pickle with ExplainableTweets for all tweets from the explained test set
+        # create pickle with ExplainableTweets for a configured set of tweets
+        # ALL_TWEETS = range(len(X_test))
+        JUST_WITH_LIME_EXP = get_explainable_tweet_ids(experiment)
         for k in ks:
             logging.info(f'Experiment {i + 1}/{number_of_experiments}: Saving ExplainableTweets..')
 
@@ -54,7 +57,7 @@ if __name__ == '__main__':
             explainable_tweets = [ExplainableTweet(tweet_id=tweet_id, experiment=experiment,
                                                    tweet_loader=tweet_loader, explanation_loader=explanation_loader,
                                                    trained_model_loader=trained_model_loader, k=k)
-                                  for tweet_id in tqdm(range(len(X_test)))]
+                                  for tweet_id in tqdm(JUST_WITH_LIME_EXP)]
             pickle.dump(explainable_tweets,
                         open(os.path.join(get_experiment_path(experiment), f'explainable_tweets_k{k}.pkl'), "wb"))
 
