@@ -1,11 +1,11 @@
 import os
-from _utils.pathfinder import get_repo_path
+from _utils.pathfinder import get_experiment_path
 import pickle
 
 
-def load_features_and_scores(model, ex_method):
-    path = os.path.join(get_repo_path(), '_explanations', 'unsex')
-    if ex_method in ['impt', 'coef']:
+def load_features_and_scores(model, ex_method, experiment):
+    path = os.path.join(get_experiment_path(experiment), 'explanations')
+    if ex_method == 'builtin':
         with open(os.path.join(path, 'features', f'{model}_{ex_method}_all_features.pkl'), 'rb') as f:
             c = pickle.load(f)
             features = c.keys()
@@ -35,17 +35,16 @@ def get_top_k_features(features, scores, k=None):
     return [fe_sc[0] for fe_sc in sorted(comb, key=lambda i: i[1], reverse=True)][:k]
 
 
-def get_explainable_tweet_ids():
+def get_explainable_tweet_ids(experiment):
     """
     - get the tweet ids of the tweets that have explanations from every method
     - ids are in relation to the X_test_raw.pkl dataset which contains 816 tweets
-    info: at the moment 287 are explainable
     """
     # filter "unimportant tweets" without non-zero LIME explanations
     # tweets with lime explanation that makes sense (!= [0,0,0,0,...])
-    s1 = load_features_and_scores('xgboost', 'lime')[1]
-    s2 = load_features_and_scores('lr', 'lime')[1]
-    s3 = load_features_and_scores('svm', 'lime')[1]
+    s1 = load_features_and_scores('xgboost', 'lime', experiment)[1]
+    s2 = load_features_and_scores('lr', 'lime', experiment)[1]
+    s3 = load_features_and_scores('svm', 'lime', experiment)[1]
     tweet_ids1 = [tweet_id for tweet_id, scores in enumerate(s1) if sum(scores) != 0]
     tweet_ids2 = [tweet_id for tweet_id, scores in enumerate(s2) if sum(scores) != 0]
     tweet_ids3 = [tweet_id for tweet_id, scores in enumerate(s3) if sum(scores) != 0]

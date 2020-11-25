@@ -6,55 +6,73 @@ from _utils.trained_model_loader import TrainedModelLoader
 class ExplainableTweet:
     """
     Attributes:
-        - raw: original tweet
-        - tokens: preprocessed tweet, tokens only
-        - label: real label of the tweet (sexist or non-sexist, i.e. 1 or 0)
-        - explanations (by every model): dict with explanation_method as key and explanation as value
-        - predictions (by every model): dict with model_name as key and prediction as value
-
-    Configuration:
-        - k: explanation contains k most important words
+        - experiment:       in which experimental setting was this tweet getting explained
+        - raw:              original tweet
+        - tokens:           preprocessed tweet, tokens only
+        - label:            real label of the tweet (sexist or non-sexist, i.e. 1 or 0)
+        - explanations (by every model):    dict with explanation_method as key and explanation as value
+        - predictions (by every model):     dict with model_name as key and prediction as value
     """
-    k = 5
 
-    def __init__(self, tweet_id):
+    def __init__(self, tweet_id, experiment, k=5,
+                 tweet_loader=None, explanation_loader=None, trained_model_loader=None):
         """
         input:
-            tweet_id: place in test dataset
+            tweet_id:       place in test dataset
+            experiment:     experiment setting in which this tweet was used and explained
+            k:              explanation contains k most important words
         """
-        tweet_loader = TweetLoader()
+        self.k = k
+        self.experiment = experiment
+
+        if tweet_loader is None:
+            tweet_loader = TweetLoader(experiment)
         self.raw = tweet_loader.get_raw_tweet_from_id(tweet_id)
         self.tokens = tweet_loader.get_tweet_tokens_from_id(tweet_id)
         self.label = tweet_loader.get_tweet_label_from_id(tweet_id)
 
-        xgboost_loader = ExplanationLoader('xgboost')
-        svm_loader = ExplanationLoader('svm')
-        lr_loader = ExplanationLoader('lr')
+        if explanation_loader is None:
+            explanation_loader = ExplanationLoader(experiment, tweet_loader=tweet_loader)
 
         self.explanations = {
             'xgboost': {
-                'impt': xgboost_loader.get_explanation_from_method_by_tweet_id('impt', tweet_id, k=self.k),
-                'lime': xgboost_loader.get_explanation_from_method_by_tweet_id('lime', tweet_id, k=self.k),
-                'shap': xgboost_loader.get_explanation_from_method_by_tweet_id('shap', tweet_id, k=self.k)
+                'builtin': explanation_loader.get_explanation('xgboost', 'builtin', tweet_id, k=self.k),
+                'lime': explanation_loader.get_explanation('xgboost', 'lime', tweet_id, k=self.k),
+                'shap': explanation_loader.get_explanation('xgboost', 'shap', tweet_id, k=self.k)
             },
             'svm': {
-                'impt': svm_loader.get_explanation_from_method_by_tweet_id('coef', tweet_id, k=self.k),
-                'lime': svm_loader.get_explanation_from_method_by_tweet_id('lime', tweet_id, k=self.k),
-                'shap': svm_loader.get_explanation_from_method_by_tweet_id('shap', tweet_id, k=self.k)
+                'builtin': explanation_loader.get_explanation('svm', 'builtin', tweet_id, k=self.k),
+                'lime': explanation_loader.get_explanation('svm', 'lime', tweet_id, k=self.k),
+                'shap': explanation_loader.get_explanation('svm', 'shap', tweet_id, k=self.k)
             },
             'lr': {
-                'impt': lr_loader.get_explanation_from_method_by_tweet_id('impt', tweet_id, k=self.k),
-                'lime': lr_loader.get_explanation_from_method_by_tweet_id('lime', tweet_id, k=self.k),
-                'shap': lr_loader.get_explanation_from_method_by_tweet_id('shap', tweet_id, k=self.k)
+                'builtin': explanation_loader.get_explanation('lr', 'builtin', tweet_id, k=self.k),
+                'lime': explanation_loader.get_explanation('lr', 'lime', tweet_id, k=self.k),
+                'shap': explanation_loader.get_explanation('lr', 'shap', tweet_id, k=self.k)
             }
         }
 
-        trained_model_loader = TrainedModelLoader()
-        xgboost = trained_model_loader.load('xgboost')
-        svm = trained_model_loader.load('svm')
-        lr = trained_model_loader.load('lr')
+        if trained_model_loader is None:
+            trained_model_loader = TrainedModelLoader(experiment)
         self.predictions = {
-            'xgboost': xgboost.predict([self.raw])[0],
-            'svm': svm.predict([self.raw])[0],
-            'lr': lr.predict([self.raw])[0]
+            'xgboost': trained_model_loader.xgboost.predict([self.raw])[0],
+            'svm': trained_model_loader.svm.predict([self.raw])[0],
+            'lr': trained_model_loader.lr.predict([self.raw])[0]
         }
+
+    def __str__(self):
+        labels = ["non-sexist", "sexist"]
+        string = f'--------------------\n' \
+                 f'Original Tweet: {self.raw}\n' \
+                 f'Preprocessed Tokens: {self.tokens}\n' \
+                 f'Real Label: {labels[self.label]}\n' \
+                 f'Predictions:\n'
+        for model, prediction in self.predictions.items():
+            string += f'{model.upper()} - {labels[prediction]}\n'
+        for model, explanations in self.explanations.items():
+            string += f'{model.upper()}:\n'
+            for ex_method, explanation in explanations.items():
+                string += f'{ex_method.upper()}: {explanation}\n'
+        string += f'Experiment: {self.experiment}'
+        string += '\n--------------------'
+        return string
