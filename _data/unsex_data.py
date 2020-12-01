@@ -5,6 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 from _preprocessing.jha2017_preprocessing import preprocess_jha2017
 from sklearn.model_selection import train_test_split
 from _utils.experiments import Experiments
+import matplotlib.pyplot as plt
 
 
 class UnsexData:
@@ -33,7 +34,7 @@ class UnsexData:
         TEST_SPLIT_ORG = round(TEST_SIZE * 0.65)  # 530
         TEST_SPLIT_MOD = round(TEST_SIZE - TEST_SPLIT_ORG)  # 286
 
-        if experiment == Experiments.ORIG_AND_ORIG:
+        if experiment == Experiments.Train_Orig_Test_Orig:
             # train: 3262 orig
             # test: 816 orig
             self.X = orig_df['text'].values.tolist()
@@ -42,7 +43,7 @@ class UnsexData:
             y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
             self.y = y.to_numpy().ravel()
             self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.20)
-        elif experiment == Experiments.ORIG_AND_ORIG_MODS:
+        elif experiment == Experiments.Train_Orig_Test_Mixed:
             # train: 3262 orig
             # test: 530 orig + 286 mods
 
@@ -55,7 +56,7 @@ class UnsexData:
             test_df = test_org_df.append(test_mod_df, ignore_index=True)
 
             self.X_train, self.X_test, self.y_train, self.y_test = self.process(train_df, test_df)
-        elif experiment == Experiments.ORIG_MODS_AND_ORIG:
+        elif experiment == Experiments.Train_Mixed_Test_Orig:
             # train: 2120 orig + 1142 mods
             # test: 816 orig
 
@@ -68,7 +69,7 @@ class UnsexData:
             train_df = train_org_df.append(train_mod_df, ignore_index=True)
 
             self.X_train, self.X_test, self.y_train, self.y_test = self.process(train_df, test_df)
-        elif experiment == Experiments.ORIG_MODS_AND_ORIG_MODS:
+        elif experiment == Experiments.Train_Mixed_Test_Mixed:
             # train: 2120 orig + 1142 mods
             # test: 530 orig + 286 mods
 
@@ -125,3 +126,33 @@ class UnsexData:
         y['sexist'] = LabelEncoder().fit_transform(y['sexist'])
         y_test = y.to_numpy().ravel()
         return X_train, X_test, y_train, y_test
+
+    def plot(self):
+        a = pd.DataFrame(self.all_data)
+        group_size = [len(a[a['of_id'].isnull()]), len(a[a['of_id'].notnull()])]
+        subgroup_size = [len(a[a['of_id'].isnull()][a['sexist'] == True]),
+                         len(a[a['of_id'].isnull()][a['sexist'] == False]),
+                         len(a[a['of_id'].notnull()])]
+        group_names = [f'Original\n{group_size[0]}', f'Adversarial Examples\n{group_size[1]}']
+        subgroup_names = [f'sexist\n{subgroup_size[0]}', f'non-sexist\n{subgroup_size[1]}', f'non-sexist\n{subgroup_size[2]}']
+
+        # Create colors
+        b, r, g, y = [plt.cm.Blues, plt.cm.Reds, plt.cm.Greens, plt.cm.YlOrBr]
+
+        # First Ring (outside)
+        fig, ax = plt.subplots()
+        ax.axis('equal')
+        mypie, _ = ax.pie(group_size, radius=1.3, labels=group_names, colors=[b(0.6), y(0.2)])
+        plt.setp(mypie, width=0.3, edgecolor='white')
+
+        # Second Ring (Inside)
+        mypie2, _ = ax.pie(subgroup_size, radius=1.3 - 0.3, labels=subgroup_names, labeldistance=0.7,
+                           colors=[r(0.5), g(0.4), g(0.4)])
+        plt.setp(mypie2, width=0.4, edgecolor='white')
+        plt.margins(0, 0)
+
+        # show it
+        current_fig = plt.gcf()
+        plt.show()
+        current_fig.savefig(
+            os.path.join(get_repo_path(), '_evaluation', 'graphs', 'unsex_data.png'))
