@@ -22,27 +22,27 @@ if __name__ == '__main__':
     X_test = [1] * 816
     logging.info(f'Start pipeline at {datetime.now()}')
     for i, experiment in enumerate(Experiments):
-        # logging.info(f"# Start Experiment {i + 1}/{number_of_experiments}: {experiment.name} #")
-        # ud = UnsexData(experiment)
-        #
-        # logging.info(f'Experiment {i + 1}/{number_of_experiments}: Load data..')
-        # X_train, X_test, y_train, y_test = ud.get_preprocessed_data()
-        # # ud.save_as_csv()
-        #
-        # logging.info(f'Experiment {i + 1}/{number_of_experiments}: Start training..')
-        # train_all(X_train, X_test, y_train, y_test, experiment=experiment)
-        #
-        # logging.info(f'Experiment {i + 1}/{number_of_experiments}: Start explaining..')
-        # explain_all(X_train, X_test, experiment=experiment)
-        #
-        # # save used training data
-        # logging.info(f'Experiment {i + 1}/{number_of_experiments}: Saving used data..')
-        # path = os.path.join(get_experiment_path(experiment), 'used_data')
-        # pickle.dump(X_train, open(os.path.join(path, 'X_train.pkl'), "wb"))
-        # pickle.dump(X_test, open(os.path.join(path, 'X_test.pkl'), "wb"))
-        # pickle.dump(ud.get_raw_test_tweets(), open(os.path.join(path, 'X_test_raw.pkl'), "wb"))
-        # pickle.dump(y_train, open(os.path.join(path, 'y_train.pkl'), "wb"))
-        # pickle.dump(y_test, open(os.path.join(path, 'y_test.pkl'), "wb"))
+        logging.info(f"# Start Experiment {i + 1}/{number_of_experiments}: {experiment.name} #")
+        ud = UnsexData(experiment)
+
+        logging.info(f'Experiment {i + 1}/{number_of_experiments}: Load data..')
+        X_train, X_test, y_train, y_test = ud.get_preprocessed_data()
+        # ud.save_as_csv()
+
+        logging.info(f'Experiment {i + 1}/{number_of_experiments}: Start training..')
+        train_all(X_train, X_test, y_train, y_test, experiment=experiment)
+
+        logging.info(f'Experiment {i + 1}/{number_of_experiments}: Start explaining..')
+        explain_all(X_train, X_test, experiment=experiment)
+
+        # save used training data
+        logging.info(f'Experiment {i + 1}/{number_of_experiments}: Saving used data..')
+        path = os.path.join(get_experiment_path(experiment), 'used_data')
+        pickle.dump(X_train, open(os.path.join(path, 'X_train.pkl'), "wb"))
+        pickle.dump(X_test, open(os.path.join(path, 'X_test.pkl'), "wb"))
+        pickle.dump(ud.get_raw_test_tweets(), open(os.path.join(path, 'X_test_raw.pkl'), "wb"))
+        pickle.dump(y_train, open(os.path.join(path, 'y_train.pkl'), "wb"))
+        pickle.dump(y_test, open(os.path.join(path, 'y_test.pkl'), "wb"))
 
         # create pickle with ExplainableTweets for a configured set of tweets
         # ALL_TWEETS = range(len(X_test))
