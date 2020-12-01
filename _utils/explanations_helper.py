@@ -54,3 +54,7 @@ def get_explainable_tweet_ids(experiment):
             set(tweet_ids3))
     )
     return sorted(tweet_ids)
+
+
+def get_amount_of_explainable_tweets(experiment):
+    return len(get_explainable_tweet_ids(experiment))
