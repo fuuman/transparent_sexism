@@ -140,7 +140,7 @@ def unsex_wrapper_clf_predict(test_tokens, model=None, model_name=None):
         test_split_tokens = split_tokens(test_tokens)
         mapping = [model.get_words_to_ids(l) for l in test_split_tokens]
         labels = np.array(model.predict(test_split_tokens, mapping, return_probablity=True))
-    elif model_name == "xgboost":
+    elif model_name in ["xgboost", "lr"]:
         labels = model.predict_proba(test_tokens)
     elif 'bert' in model_name:
         labels = model.predict_batch(test_tokens)
