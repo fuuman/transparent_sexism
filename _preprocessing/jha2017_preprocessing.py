@@ -23,7 +23,7 @@ url_pattern = re.compile(
     flags=re.UNICODE)
 mention_pattern = re.compile('([^a-zA-Z0-9]|^)@\S+', flags=re.UNICODE)
 hashtag_pattern = re.compile('([^a-zA-Z0-9]|^)#\S+', flags=re.UNICODE)
-rt_pattern = re.compile('([^a-zA-Z0-9]|^)(rt|RT|ht|cc)([^a-zA-Z0-9]|$)', flags=re.UNICODE)
+rt_pattern = re.compile('([^a-zA-Z0-9]|^)(rt|ht|cc)([^a-zA-Z0-9]|$)', flags=re.UNICODE | re.IGNORECASE)
 stop_words = set(stopwords.words('english'))
 
 
