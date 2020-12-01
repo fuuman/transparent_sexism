@@ -39,26 +39,6 @@ def transform(model_name, experiment, tokens):
 
 
 class Metrics:
-    # @staticmethod
-    # def my_cosine_similarity(exps):
-    #     cs_values_lime_shap = []
-    #     cs_values_lime_builtin = []
-    #     cs_values_shap_builtin = []
-    #     for i in range(exps['lime'].shape[0]):
-    #         lime_array = exps['lime'].toarray()[i:i + 1, :]
-    #         shap_array = exps['shap'].toarray()[i:i + 1, :]
-    #         builtin_array = exps['builtin'].toarray()[i:i + 1, :]
-    #         matrix = np.concatenate((lime_array, shap_array, builtin_array))
-    #         cs_m = cosine_similarity(matrix)
-    #         cs_values_lime_shap.append(cs_m[0:1, 1:2][0][0])
-    #         cs_values_lime_builtin.append(cs_m[0:1, 2:3][0][0])
-    #         cs_values_shap_builtin.append(cs_m[1:2, 2:3][0][0])
-    #
-    #     cs_values_lime_shap = np.sort(cs_values_lime_shap)
-    #     cs_values_lime_builtin = np.sort(cs_values_lime_builtin)
-    #     cs_values_shap_builtin = np.sort(cs_values_shap_builtin)
-    #     return cs_values_lime_shap, cs_values_lime_builtin, cs_values_shap_builtin
-
     @staticmethod
     def my_coefficient(exps, f):
         values_lime_shap = []
@@ -82,93 +62,6 @@ class Metrics:
         values_lime_builtin = np.sort(values_lime_builtin)
         values_shap_builtin = np.sort(values_shap_builtin)
         return values_lime_shap, values_lime_builtin, values_shap_builtin
-
-    # @staticmethod
-    # def my_dice_coefficient(exps):
-    #     values_lime_shap = []
-    #     values_lime_builtin = []
-    #     values_shap_builtin = []
-    #     for i in range(exps['lime'].shape[0]):
-    #         # 816 steps
-    #         # in every step compare one tweet
-    #         lime_array = exps['lime'].toarray()[i:i + 1, :][0]
-    #         shap_array = exps['shap'].toarray()[i:i + 1, :][0]
-    #         builtin_array = exps['builtin'].toarray()[i:i + 1, :][0]
-    #
-    #         dice = lambda a, b: (2 * sum([l * s for l, s in zip(a, b)])) / (sum(a) + sum(b))
-    #
-    #         values_lime_shap.append(dice(lime_array, shap_array))
-    #         values_lime_builtin.append(dice(lime_array, builtin_array))
-    #         values_shap_builtin.append(dice(shap_array, builtin_array))
-    #     values_lime_shap = np.sort(values_lime_shap)
-    #     values_lime_builtin = np.sort(values_lime_builtin)
-    #     values_shap_builtin = np.sort(values_shap_builtin)
-    #     return values_lime_shap, values_lime_builtin, values_shap_builtin
-    #
-    #
-    # def my_jaccard_coefficient(exps):
-    #     values_lime_shap = []
-    #     values_lime_builtin = []
-    #     values_shap_builtin = []
-    #     for i in range(exps['lime'].shape[0]):
-    #         # 816 steps
-    #         # in every step compare one tweet
-    #         lime_array = exps['lime'].toarray()[i:i + 1, :][0]
-    #         shap_array = exps['shap'].toarray()[i:i + 1, :][0]
-    #         builtin_array = exps['builtin'].toarray()[i:i + 1, :][0]
-    #
-    #         jaccard = lambda a, b: (sum([i * j for i, j in zip(a, b)])) / (
-    #                     sum(a) + sum(b) - sum([i * j for i, j in zip(a, b)]))
-    #
-    #         values_lime_shap.append(jaccard(lime_array, shap_array))
-    #         values_lime_builtin.append(jaccard(lime_array, builtin_array))
-    #         values_shap_builtin.append(jaccard(shap_array, builtin_array))
-    #     values_lime_shap = np.sort(values_lime_shap)
-    #     values_lime_builtin = np.sort(values_lime_builtin)
-    #     values_shap_builtin = np.sort(values_shap_builtin)
-    #     return values_lime_shap, values_lime_builtin, values_shap_builtin
-    #
-    # def my_raw_coefficient(exps):
-    #     values_lime_shap = []
-    #     values_lime_builtin = []
-    #     values_shap_builtin = []
-    #     for i in range(exps['lime'].shape[0]):
-    #         # 816 steps
-    #         # in every step compare one tweet
-    #         lime_array = exps['lime'].toarray()[i:i + 1, :][0]
-    #         shap_array = exps['shap'].toarray()[i:i + 1, :][0]
-    #         builtin_array = exps['builtin'].toarray()[i:i + 1, :][0]
-    #
-    #         jaccard = lambda a, b: sum([i * j for i, j in zip(a, b)])
-    #
-    #         values_lime_shap.append(jaccard(lime_array, shap_array))
-    #         values_lime_builtin.append(jaccard(lime_array, builtin_array))
-    #         values_shap_builtin.append(jaccard(shap_array, builtin_array))
-    #     values_lime_shap = np.sort(values_lime_shap)
-    #     values_lime_builtin = np.sort(values_lime_builtin)
-    #     values_shap_builtin = np.sort(values_shap_builtin)
-    #     return values_lime_shap, values_lime_builtin, values_shap_builtin
-    #
-    # def my_overlap_coefficient(exps):
-    #     values_lime_shap = []
-    #     values_lime_builtin = []
-    #     values_shap_builtin = []
-    #     for i in range(exps['lime'].shape[0]):
-    #         # 816 steps
-    #         # in every step compare one tweet
-    #         lime_array = exps['lime'].toarray()[i:i + 1, :][0]
-    #         shap_array = exps['shap'].toarray()[i:i + 1, :][0]
-    #         builtin_array = exps['builtin'].toarray()[i:i + 1, :][0]
-    #
-    #         jaccard = lambda a, b: (sum([min(i, j) for i, j in zip(a, b)])) / (min(sum(a), sum(b)))
-    #
-    #         values_lime_shap.append(jaccard(lime_array, shap_array))
-    #         values_lime_builtin.append(jaccard(lime_array, builtin_array))
-    #         values_shap_builtin.append(jaccard(shap_array, builtin_array))
-    #     values_lime_shap = np.sort(values_lime_shap)
-    #     values_lime_builtin = np.sort(values_lime_builtin)
-    #     values_shap_builtin = np.sort(values_shap_builtin)
-    #     return values_lime_shap, values_lime_builtin, values_shap_builtin
 
 
 METRIC_FUNCTIONS = {
