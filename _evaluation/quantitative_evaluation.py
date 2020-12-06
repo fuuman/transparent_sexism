@@ -224,6 +224,8 @@ def _print_latex_global(e, results):
                  x['svm']['builtin'], x['xgboost']['lime'], x['xgboost']['shap'], x['xgboost']['builtin']))
     print(r"\begin{table}[!htbp]" + '\n'
           r"\centering" + '\n'
+          r"\begin{adjustbox}{width=1\textwidth}" + '\n'
+          r"\small" + '\n'
           r"\begin{tabular}{*3c|*3c|*3c}" + '\n'
           r"\toprule" + '\n'
           r"\multicolumn{9}{c}{\textbf{" + experiment_name + r"}}\\" + '\n'
@@ -234,7 +236,8 @@ def _print_latex_global(e, results):
         print(' & '.join(row) + '\\\\')
     print(r"\bottomrule" + '\n'
           r"\end{tabular}" + '\n'
-          r"\caption{" + f"Compare global explanations for the experiment '{experiment_name}'" + "}" + '\n'
+          r"\end{adjustbox}" + '\n'
+          r"\caption{" + f"Global explanations for the experiment '{experiment_name}'" + "}" + '\n'
           r"\end{table}" + '\n')
 
 
