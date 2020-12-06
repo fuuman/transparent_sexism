@@ -29,6 +29,8 @@ _trained_models/*
 
 _data/icwsm2020_data/*
 
+_data/as_csv
+
 *.pkl
 *.png
 *.csv
