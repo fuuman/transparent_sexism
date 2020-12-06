@@ -106,14 +106,14 @@ class UnsexData:
         # see: https://github.com/kaushaltrivedi/fast-bert
         df = pd.DataFrame(zip(X_train, y_train), columns=['text', 'label'])
         train_df = df.iloc[:2400, :]
-        train_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', 'train.csv'))
+        train_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', self.experiment.name, 'train.csv'))
 
         dev_df = df.iloc[2400:, :]
         dev_df.reset_index(drop=True, inplace=True)
-        dev_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', 'dev.csv'))
+        dev_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', self.experiment.name, 'dev.csv'))
 
         test_df = pd.DataFrame(zip(X_test, y_test), columns=['text', 'label'])
-        test_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', 'val.csv'))
+        test_df.to_csv(os.path.join(self.REPO_PATH, '_data', 'as_csv', self.experiment.name, 'val.csv'))
 
     @staticmethod
     def process(train_df, test_df):
