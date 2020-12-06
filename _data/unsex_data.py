@@ -133,7 +133,7 @@ class UnsexData:
         subgroup_size = [len(a[a['of_id'].isnull()][a['sexist'] == True]),
                          len(a[a['of_id'].isnull()][a['sexist'] == False]),
                          len(a[a['of_id'].notnull()])]
-        group_names = [f'Original\n{group_size[0]}', f'Adversarial Examples\n{group_size[1]}']
+        group_names = [f'Originals\n{group_size[0]}', f'Adversarial Examples\n{group_size[1]}']
         subgroup_names = [f'sexist\n{subgroup_size[0]}', f'non-sexist\n{subgroup_size[1]}', f'non-sexist\n{subgroup_size[2]}']
 
         # Create colors
@@ -156,3 +156,68 @@ class UnsexData:
         plt.show()
         current_fig.savefig(
             os.path.join(get_repo_path(), '_evaluation', 'graphs', 'unsex_data.png'))
+
+    @staticmethod
+    def plot_source():
+        values = [678, 678, 678, 1280, 764]
+        labels = [f'{l}\n{v}' for l, v in zip(['benevolent', 'hostile', 'other', 'callme', 'scales'], values)]
+        plt.pie(values, labels=labels)
+        # show it
+        current_fig = plt.gcf()
+        plt.show()
+        current_fig.savefig(
+            os.path.join(get_repo_path(), '_evaluation', 'graphs', 'unsex_data_source.png'))
+
+    @staticmethod
+    def plot_per_experiment():
+        for experiment in Experiments:
+            group_size = [3262, 816]
+            group_names = [f'Training\n{group_size[0]}', f'Test\n{group_size[1]}']
+            subgroup_size = None
+            subgroup_names = None
+
+            # Create colors
+            b, y, p = [plt.cm.Blues, plt.cm.YlOrBr, plt.cm.Purples]
+
+            # First Ring (outside)
+            fig, ax = plt.subplots()
+            ax.axis('equal')
+            mypie, _ = ax.pie(group_size, radius=1.3, labels=group_names, colors=[p(0.6), p(0.4)])
+            plt.setp(mypie, width=0.3, edgecolor='white')
+
+            if experiment == Experiments.Train_Orig_Test_Orig:
+                # train: 3262 orig
+                # test: 816 orig
+                subgroup_size = [3262, 816]
+                subgroup_names = [f'Originals\n{subgroup_size[0]}', f'Originals\n{subgroup_size[1]}']
+                # Second Ring (Inside)
+                mypie2, _ = ax.pie(subgroup_size, radius=1.3 - 0.3, labels=subgroup_names, labeldistance=0.7,
+                                   colors=[b(0.6), b(0.6)])
+            elif experiment == Experiments.Train_Orig_Test_Mixed:
+                # train: 3262 orig
+                # test: 530 orig + 286 mods
+                subgroup_size = [3262, 530, 286]
+                subgroup_names = [f'Originals\n{subgroup_size[0]}', f'Originals\n{subgroup_size[1]}', f'Adversarial Examples\n{subgroup_size[2]}']
+                mypie2, _ = ax.pie(subgroup_size, radius=1.3 - 0.3, labels=subgroup_names, labeldistance=0.7,
+                                   colors=[b(0.6), b(0.6), y(0.2)])
+            elif experiment == Experiments.Train_Mixed_Test_Orig:
+                # train: 2120 orig + 1142 mods
+                # test: 816 orig
+                subgroup_size = [2120, 1142, 816]
+                subgroup_names = [f'Originals\n{subgroup_size[0]}', f'Adversarial Examples\n{subgroup_size[1]}', f'Originals\n{subgroup_size[2]}']
+                mypie2, _ = ax.pie(subgroup_size, radius=1.3 - 0.3, labels=subgroup_names, labeldistance=0.7,
+                                   colors=[b(0.6), y(0.2), b(0.6)])
+            elif experiment == Experiments.Train_Mixed_Test_Mixed:
+                # train: 2120 orig + 1142 mods
+                # test: 530 orig + 286 mods
+                subgroup_size = [2120, 1142, 530, 286]
+                subgroup_names = [f'Originals\n{subgroup_size[0]}', f'Adversarial Examples\n{subgroup_size[1]}', f'Originals\n{subgroup_size[2]}', f'Adversarial Examples\n{subgroup_size[3]}']
+                mypie2, _ = ax.pie(subgroup_size, radius=1.3 - 0.3, labels=subgroup_names, labeldistance=0.7,
+                                   colors=[b(0.6), y(0.2), b(0.6), y(0.2)])
+            plt.setp(mypie2, width=0.4, edgecolor='white')
+            plt.margins(0, 0)
+            current_fig = plt.gcf()
+            plt.show()
+            current_fig.savefig(
+                os.path.join(get_repo_path(), '_evaluation', 'graphs', f'{experiment.name}_data.png'))
+
