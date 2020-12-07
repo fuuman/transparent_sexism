@@ -39,7 +39,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None, ex
     Returns:
         classification report as pandas DataFrame (optional)
     """
-    if 'bert' in str(type(model)).lower():
+    if model == 'fastbert':
         # fastbert
         # if save_as:
         #     model.fit(X_train, y_train, model_saving_path=os.path.join('models', f'{save_as}.bin'))
@@ -51,6 +51,7 @@ def train(model, X_train, X_test, y_train, y_test, save_as=None, report=None, ex
 
         # fast-bert
         # no training needed; already trained in google colab due to RAM issues
+        model = get_fastbert_model(experiment)
         predictions = model.predict_batch(X_test)
         y_pred = np.array([int(p[0][0]) for p in predictions])
     else:
@@ -122,7 +123,6 @@ def train_all(X_train, X_test, y_train, y_test, experiment=None):
 
     # pypi package 'fast-bert'
     # ud.save_as_csv(X_train, X_test, y_train, y_test)
-    # fastbert = get_fastbert_model()
-    # train(fastbert, X_train, X_test, y_train, y_test, report='fast-bert')
+    train('fastbert', X_train, X_test, y_train, y_test, report='fast-bert', experiment=experiment)
     #
     # print('Training finished.')
