@@ -35,3 +35,6 @@ _data/as_csv
 *.png
 *.csv
 *.txt
+*.json
+*.bin
+*/tensorboard/*
