@@ -3,12 +3,12 @@ from fast_bert import BertDataBunch
 import os
 from fast_bert import accuracy
 import logging
-from _utils.pathfinder import get_repo_path
+from _utils.pathfinder import get_experiment_path, get_repo_path
 import torch
 
 
-def get_fastbert_model():
-    data_path = os.path.join(get_repo_path(), '_data', 'as_csv')
+def get_fastbert_model(experiment):
+    data_path = os.path.join(get_repo_path(), '_data', 'as_csv', experiment.name)
 
     databunch = BertDataBunch(data_path, data_path,
                               tokenizer='bert-base-uncased',
@@ -24,8 +24,8 @@ def get_fastbert_model():
                               model_type='bert')
 
     fastbert = BertLearner.from_pretrained_model(databunch,
-                                                 pretrained_path=os.path.join(get_repo_path(),
-                                                                              '_trained_models', 'fast-bert'),
+                                                 pretrained_path=os.path.join(get_experiment_path(experiment),
+                                                                              'models', 'fastbert'),
                                                  metrics=[{'name': 'accuracy', 'function': accuracy}],
                                                  device=torch.device("cuda"),
                                                  logger=logging.getLogger(), output_dir='output')
