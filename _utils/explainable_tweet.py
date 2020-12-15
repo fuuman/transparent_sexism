@@ -10,7 +10,7 @@ class ExplainableTweet:
         - raw:              original tweet
         - tokens:           preprocessed tweet, tokens only
         - label:            real label of the tweet (sexist or non-sexist, i.e. 1 or 0)
-        - explanations (by every model):    dict with explanation_method as key and explanation as value
+        - explanations (by every model):    dict with model and explanation_method as key and explanation as value
         - predictions (by every model):     dict with model_name as key and prediction as value
     """
 
