@@ -216,6 +216,7 @@ class UnsexData:
                                    colors=[b(0.6), y(0.2), b(0.6), y(0.2)])
             plt.setp(mypie2, width=0.4, edgecolor='white')
             plt.margins(0, 0)
+            plt.title(experiment.name, loc='left')
             current_fig = plt.gcf()
             plt.show()
             current_fig.savefig(
