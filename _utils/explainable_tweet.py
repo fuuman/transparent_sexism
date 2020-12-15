@@ -76,3 +76,14 @@ class ExplainableTweet:
         string += f'Experiment: {self.experiment}'
         string += '\n--------------------'
         return string
+
+    def as_json(self):
+        j = {
+            "experiment": self.experiment.name,
+            "raw": self.raw,
+            "tokens": self.tokens,
+            "label": self.label,
+            "predictions": self.predictions,
+            "explanations": self.explanations
+        }
+        return j
